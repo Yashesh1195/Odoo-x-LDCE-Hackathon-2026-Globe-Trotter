@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import TopNav from "../../components/TopNav";
+import TopNav from "@/app/components/TopNav";
+import { getLocationImage } from "@/app/lib/destinationImages";
 import { searchActivity } from "../../actions/activity";
 
 interface ActivityResult {
@@ -122,7 +123,7 @@ export default function SearchActivityPage() {
       {/* Photo Side */}
       <div className="w-full md:w-[35%] h-64 md:h-auto bg-[var(--surface-soft)] relative overflow-hidden shrink-0 border-b md:border-b-0 md:border-r border-[var(--hairline-strong)]">
         <img 
-          src={`https://picsum.photos/seed/${encodeURIComponent(result.title)}/800/600`} 
+          src={getLocationImage(result.title)} 
           alt={result.title} 
           className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
         />
