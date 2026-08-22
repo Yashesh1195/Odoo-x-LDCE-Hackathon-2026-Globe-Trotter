@@ -155,6 +155,32 @@ export const mockTrips: Trip[] = [
     travelers: 1,
     activities: ["Temple Tour", "Street Food", "Anime District", "Cherry Blossom"],
   },
+  {
+    id: "trip-005",
+    name: "Dubai Desert Escape",
+    destination: "Dubai",
+    country: "United Arab Emirates",
+    image: "/images/dest-dubai.jpg",
+    startDate: "2026-08-18",
+    endDate: "2026-08-28",
+    status: "in-progress",
+    budget: { total: 4200, spent: 1850, currency: "USD" },
+    travelers: 3,
+    activities: ["Desert Safari", "Burj Khalifa Visit", "Luxury Shopping", "Dhow Cruise"],
+  },
+  {
+    id: "trip-006",
+    name: "Santorini Sunset",
+    destination: "Santorini",
+    country: "Greece",
+    image: "/images/dest-santorini.jpg",
+    startDate: "2026-05-20",
+    endDate: "2026-05-28",
+    status: "completed",
+    budget: { total: 3100, spent: 2940, currency: "USD" },
+    travelers: 2,
+    activities: ["Caldera Hike", "Wine Tasting", "Beach Day", "Sunset Photography"],
+  },
 ];
 
 // ── Budget Summary ─────────────────────────────────────────────────

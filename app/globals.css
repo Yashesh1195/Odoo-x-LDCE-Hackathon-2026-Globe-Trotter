@@ -155,3 +155,36 @@ body {
 .overflow-x-auto::-webkit-scrollbar-thumb:hover {
   background: var(--muted-soft);
 }
+
+/* ── Trip Detail Modal Slide-in ──────────────────────────────────── */
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease forwards;
+}
+
+/* ── Section Collapse Animation ──────────────────────────────────── */
+
+@keyframes collapseIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 2000px;
+  }
+}
+
+.animate-collapseIn {
+  animation: collapseIn 0.3s ease forwards;
+}
+
