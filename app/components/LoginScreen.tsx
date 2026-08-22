@@ -68,10 +68,14 @@ export default function LoginScreen({
 
       setIsLoading(false);
       setIsSuccess(true);
+      if (result.user) {
+        localStorage.setItem("gt_user", JSON.stringify(result.user));
+        document.cookie = `gt_user_id=${result.user.id}; path=/; max-age=86400`;
+      }
       if (onSuccess) {
         onSuccess(result.user?.firstName || username);
       } else {
-        setTimeout(() => router.push("/dashboard"), 1000);
+        setTimeout(() => router.push("/dashboard"), 800);
       }
     } catch (err) {
       setErrorMessage("An unexpected error occurred. Please try again.");

@@ -4,9 +4,25 @@ import React from "react";
 
 interface HeroBannerProps {
   userName: string;
+  userCity?: string;
+  userCountry?: string;
+  stats?: {
+    tripsCompleted: number;
+    countriesVisited: number;
+    totalSpentFormatted: string;
+  };
 }
 
-export default function HeroBanner({ userName }: HeroBannerProps) {
+export default function HeroBanner({
+  userName,
+  userCity,
+  userCountry,
+  stats,
+}: HeroBannerProps) {
+  const completedTrips = stats ? String(stats.tripsCompleted) : "7";
+  const countries = stats ? String(stats.countriesVisited) : "12";
+  const spent = stats ? stats.totalSpentFormatted : "$6.3K";
+
   return (
     <section
       id="hero-banner"
@@ -43,36 +59,56 @@ export default function HeroBanner({ userName }: HeroBannerProps) {
           minHeight: 360,
         }}
       >
-        {/* Welcome Tag */}
-        <div
-          className="inline-flex items-center gap-2 mb-4 animate-slideUp"
-          style={{
-            backgroundColor: "rgba(28,105,212,0.2)",
-            border: "1px solid rgba(28,105,212,0.4)",
-            padding: "6px 14px",
-            width: "fit-content",
-          }}
-        >
-          <span
+        {/* Welcome Tag & User Location */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div
+            className="inline-flex items-center gap-2 animate-slideUp"
             style={{
-              width: 6,
-              height: 6,
-              borderRadius: "9999px",
-              backgroundColor: "var(--success)",
-              display: "inline-block",
-            }}
-          />
-          <span
-            style={{
-              color: "var(--on-dark)",
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: "1.5px",
-              textTransform: "uppercase" as const,
+              backgroundColor: "rgba(28,105,212,0.2)",
+              border: "1px solid rgba(28,105,212,0.4)",
+              padding: "6px 14px",
+              width: "fit-content",
             }}
           >
-            Welcome Back
-          </span>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "9999px",
+                backgroundColor: "var(--success)",
+                display: "inline-block",
+              }}
+            />
+            <span
+              style={{
+                color: "var(--on-dark)",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              Welcome Back
+            </span>
+          </div>
+
+          {(userCity || userCountry) && (
+            <div
+              className="inline-flex items-center gap-1.5 animate-slideUp"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--on-dark)",
+                letterSpacing: "1px",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              <span>📍 {userCity ? `${userCity}, ` : ""}{userCountry || ""}</span>
+            </div>
+          )}
         </div>
 
         {/* Headline */}
@@ -108,15 +144,15 @@ export default function HeroBanner({ userName }: HeroBannerProps) {
           travel budget — all in one place.
         </p>
 
-        {/* Stats Row */}
+        {/* Dynamic Stats Row */}
         <div
           className="flex gap-8 animate-slideUp"
           style={{ animationDelay: "0.3s" }}
         >
           {[
-            { value: "7", label: "TRIPS COMPLETED" },
-            { value: "12", label: "COUNTRIES" },
-            { value: "$6.3K", label: "TOTAL SPENT" },
+            { value: completedTrips, label: "TRIPS COMPLETED" },
+            { value: countries, label: "COUNTRIES" },
+            { value: spent, label: "TOTAL SPENT" },
           ].map((stat) => (
             <div key={stat.label}>
               <div

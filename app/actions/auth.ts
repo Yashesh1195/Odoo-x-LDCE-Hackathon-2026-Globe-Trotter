@@ -29,7 +29,19 @@ export async function registerUser(data: any) {
       },
     });
 
-    return { success: true, user: { id: newUser.id, email: newUser.email, firstName: newUser.firstName } };
+    return {
+      success: true,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        city: newUser.city,
+        country: newUser.country,
+        phoneNumber: newUser.phoneNumber,
+        photoUrl: newUser.photoUrl,
+      },
+    };
   } catch (error) {
     console.error("Registration error:", error);
     return { error: "An error occurred during registration. Please try again." };
@@ -52,7 +64,19 @@ export async function loginUser(data: any) {
       return { error: "Invalid username or password." };
     }
 
-    return { success: true, user: { id: user.id, email: user.email, firstName: user.firstName } };
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        city: user.city,
+        country: user.country,
+        phoneNumber: user.phoneNumber,
+        photoUrl: user.photoUrl,
+      },
+    };
   } catch (error) {
     console.error("Login error:", error);
     return { error: "An error occurred during login. Please try again." };

@@ -1,16 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export default function TopNav() {
+interface TopNavProps {
+  user?: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email?: string;
+    city?: string;
+    country?: string;
+  } | null;
+}
+
+export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [localUser, setLocalUser] = useState<{
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email?: string;
+    city?: string;
+    country?: string;
+  } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("gt_user");
+      if (stored) {
+        setLocalUser(JSON.parse(stored));
+      }
+    } catch {}
+  }, []);
+
+  const activeUser = propUser || localUser;
+
+  const getInitials = () => {
+    if (!activeUser) return "GT";
+    let f = activeUser.firstName ? activeUser.firstName.trim()[0] : "";
+    let l = activeUser.lastName ? activeUser.lastName.trim()[0] : "";
+
+    // If last name initial is missing, try splitting name or full name
+    if (!l && activeUser.name) {
+      const parts = activeUser.name.trim().split(/\s+/);
+      if (parts.length > 1) {
+        l = parts[parts.length - 1][0] || "";
+      }
+      if (!f && parts.length > 0) {
+        f = parts[0][0] || "";
+      }
+    }
+
+    const initials = (f + l).toUpperCase();
+    return initials || "GT";
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("gt_user");
+    document.cookie = "gt_user_id=; path=/; max-age=0";
+    router.push("/login");
+  };
 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard", active: true },
     { label: "My Trips", href: "/trips" },
-    { label: "Destinations", href: "/dashboard" },
-    { label: "Budget", href: "/dashboard" },
+    { label: "Destinations", href: "/dashboard#top-regional-selections" },
+    { label: "Budget", href: "/dashboard#budget-summary" },
   ];
 
   return (
@@ -76,22 +135,71 @@ export default function TopNav() {
           ))}
         </div>
 
-        {/* ── Profile Avatar ── */}
-        <div className="flex items-center gap-3">
+        {/* ── Profile Avatar & Dropdown ── */}
+        <div className="flex items-center gap-3 relative">
           <button
             id="profile-avatar"
-            className="flex items-center justify-center bg-[var(--surface-soft)] text-[var(--muted)] border border-[var(--hairline)] cursor-pointer hover:border-[var(--primary)] transition-colors"
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="flex items-center justify-center bg-[#1c69d4] text-white border border-[var(--primary)] cursor-pointer hover:bg-[#0653b6] transition-colors shadow-sm"
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: "9999px",
               fontSize: 14,
               fontWeight: 700,
+              letterSpacing: "0.5px",
             }}
             aria-label="User profile"
+            title={
+              activeUser
+                ? `${activeUser.firstName || ""} ${activeUser.lastName || activeUser.name || ""}`.trim()
+                : "User Profile"
+            }
           >
-            YM
+            {getInitials()}
           </button>
+
+          {/* User Profile Dropdown Menu */}
+          {userMenuOpen && (
+            <div
+              className="absolute right-0 top-12 w-64 bg-white border border-[var(--hairline)] shadow-xl z-50 animate-slideDown p-4"
+              style={{ borderRadius: 0 }}
+            >
+              <div className="border-b border-[var(--hairline)] pb-3 mb-3">
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
+                  {activeUser?.firstName
+                    ? `${activeUser.firstName} ${activeUser.lastName || ""}`
+                    : activeUser?.name || "Member Profile"}
+                </div>
+                {activeUser?.email && (
+                  <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>
+                    {activeUser.email}
+                  </div>
+                )}
+                {activeUser?.city && activeUser?.country && (
+                  <div style={{ fontSize: 11, color: "var(--primary)", fontWeight: 700, marginTop: 4 }}>
+                    📍 {activeUser.city}, {activeUser.country}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/trips"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] py-1 no-underline uppercase tracking-wider"
+                >
+                  My Saved Trips ›
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-xs font-bold text-[#dc2626] hover:underline text-left py-1 uppercase tracking-wider cursor-pointer border-none bg-transparent"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ── Hamburger (Mobile) ── */}
           <button

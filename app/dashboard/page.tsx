@@ -48,6 +48,17 @@ export default function DashboardPage() {
       if (filterOption !== "all") params.set("filter", filterOption);
       if (sortField !== "name") params.set("sort", sortField);
 
+      // Extract active user ID from localStorage
+      try {
+        const storedUser = localStorage.getItem("gt_user");
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          if (parsed?.id) {
+            params.set("userId", parsed.id);
+          }
+        }
+      } catch {}
+
       const res = await fetch(`/api/dashboard?${params.toString()}`);
       const json: DashboardData = await res.json();
       setData(json);
@@ -87,7 +98,9 @@ export default function DashboardPage() {
         trips: [newTrip, ...prev.trips],
       };
     });
-  }, []);
+    // Refresh dashboard to recalculate real stats & budget breakdown
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   // ── AI Trip Planner handlers ──
   const handleGenerate = useCallback(async (request: TripPlanRequest) => {
@@ -105,7 +118,7 @@ export default function DashboardPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        setPlanContent(`## ⚠️ Error\n\n${err.error || "Failed to generate trip plan."}`);
+        setPlanContent(`## Error\n\n${err.error || "Failed to generate trip plan."}`);
         setIsStreaming(false);
         return;
       }
@@ -114,7 +127,7 @@ export default function DashboardPage() {
       const decoder = new TextDecoder();
 
       if (!reader) {
-        setPlanContent("## ⚠️ Error\n\nNo response stream available.");
+        setPlanContent("## Error\n\nNo response stream available.");
         setIsStreaming(false);
         return;
       }
@@ -129,7 +142,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       setPlanContent(
-        `## ⚠️ Error\n\n${err instanceof Error ? err.message : "An unexpected error occurred."}`
+        `## Error\n\n${err instanceof Error ? err.message : "An unexpected error occurred."}`
       );
     } finally {
       setIsStreaming(false);
@@ -161,7 +174,7 @@ export default function DashboardPage() {
                 color: "var(--muted)",
               }}
             >
-              Loading your dashboard...
+              Loading your personalized dashboard...
             </p>
           </div>
         </div>
@@ -174,10 +187,15 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* ── Navigation ── */}
-      <TopNav />
+      <TopNav user={data.user} />
 
       {/* ── Hero Banner (Dark Band) ── */}
-      <HeroBanner userName={data.user.firstName} />
+      <HeroBanner
+        userName={data.user.firstName || data.user.name}
+        userCity={(data.user as any).city}
+        userCountry={(data.user as any).country}
+        stats={(data.user as any).stats}
+      />
 
       {/* ── Search & Filter Bar ── */}
       <SearchFilterBar
@@ -197,21 +215,38 @@ export default function DashboardPage() {
         style={{ padding: "32px 24px 48px" }}
       >
         {/* Section Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              lineHeight: 1.3,
-              color: "var(--ink)",
-              margin: 0,
-              whiteSpace: "nowrap",
-            }}
-          >
-            Top Regional Selections
-          </h2>
+        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+          <div className="flex items-center gap-3">
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                lineHeight: 1.3,
+                color: "var(--ink)",
+                margin: 0,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Top Regional Selections
+            </h2>
+            {(data as any).preferredRegion && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--primary)",
+                  backgroundColor: "rgba(28,105,212,0.1)",
+                  padding: "4px 10px",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                Personalized for {(data.user as any).country || (data as any).preferredRegion}
+              </span>
+            )}
+          </div>
           <div
-            className="flex-1"
+            className="flex-1 hidden md:block"
             style={{
               height: 1,
               backgroundColor: "var(--hairline)",
@@ -265,7 +300,7 @@ export default function DashboardPage() {
               whiteSpace: "nowrap",
             }}
           >
-            Previous Trips
+            Previous Trips & Itineraries
           </h2>
           <div
             className="flex-1"
@@ -305,7 +340,9 @@ export default function DashboardPage() {
       </section>
 
       {/* ── Budget Highlights (Dark Band) ── */}
-      <BudgetHighlight budget={data.budgetSummary} />
+      <div id="budget-summary">
+        <BudgetHighlight budget={data.budgetSummary} />
+      </div>
 
       {/* ── Footer ── */}
       <footer
@@ -351,7 +388,7 @@ export default function DashboardPage() {
         </div>
       </footer>
 
-      {/* ── Floating Action Buttons (Plan a Trip & AI Chatbot Icon) ── */}
+      {/* ── Floating Action Buttons (Plan a Trip & AI Chatbot Logo FAB) ── */}
       {!isViewerOpen && (
         <div
           className="fixed bottom-6 right-6 z-40 flex items-center gap-3 animate-fadeIn"
@@ -360,7 +397,7 @@ export default function DashboardPage() {
           {/* Plan a Trip / Add Route Button */}
           <button
             id="plan-trip-fab"
-            className="flex items-center gap-2 cursor-pointer shadow-lg hover:shadow-xl transition-all"
+            className="flex items-center gap-2 cursor-pointer shadow-lg hover:shadow-xl hover:bg-[#fafafa] transition-all"
             style={{
               backgroundColor: "var(--canvas)",
               color: "var(--ink)",
@@ -370,7 +407,7 @@ export default function DashboardPage() {
               fontWeight: 700,
               letterSpacing: "0.5px",
             }}
-            onClick={() => router.push("/trip/new")}
+            onClick={() => setIsAddRouteOpen(true)}
           >
             <svg
               style={{ width: 16, height: 16 }}
@@ -386,42 +423,41 @@ export default function DashboardPage() {
             <span>Plan a Trip</span>
           </button>
 
-          {/* AI Travel Assistant Chatbot Floating Button */}
+          {/* AI Travel Assistant Chatbot Floating Logo Icon Button */}
           <button
             id="ai-chatbot-fab"
-            className="bmw-button-primary flex items-center gap-2 cursor-pointer shadow-lg hover:shadow-xl transition-all relative"
+            className="group relative flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 rounded-full"
             style={{
-              padding: "12px 22px",
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: "0.5px",
-              border: "none",
+              width: 58,
+              height: 58,
+              backgroundColor: "#1c69d4",
+              color: "#ffffff",
+              border: "2px solid rgba(255, 255, 255, 0.9)",
+              boxShadow: "0 8px 24px rgba(28, 105, 212, 0.45)",
             }}
             onClick={() => setIsChatbotOpen(true)}
-            title="Chat with GlobeTrotter AI Assistant"
+            title="Chat with GlobeTrotter AI Travel Assistant"
+            aria-label="Open AI Travel Assistant Chatbot"
           >
+            {/* Glowing pulse aura */}
+            <span className="absolute inset-0 rounded-full bg-[#1c69d4] opacity-50 animate-ping pointer-events-none" style={{ animationDuration: "3.5s" }} />
+
+            {/* Robot / Chatbot Logo SVG Icon */}
             <svg
-              style={{ width: 16, height: 16 }}
+              className="w-7 h-7 relative z-10 text-white transform group-hover:rotate-12 transition-transform duration-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
             >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z" />
             </svg>
-            <span>AI Assistant</span>
 
-            {/* Glowing online status indicator */}
-            <span
-              className="absolute -top-1 -right-1"
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "9999px",
-                backgroundColor: "var(--success)",
-                border: "2px solid #fff",
-              }}
-            />
+            {/* Online Status Green Indicator Dot */}
+            <span className="absolute top-0 right-0 z-20 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white" />
+            </span>
           </button>
         </div>
       )}
