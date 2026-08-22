@@ -9,10 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
+=======
+    "@google/genai": "^2.18.0",
+>>>>>>> dashboard/homeScreen
     "next": "16.3.2",
     "pg": "^8.13.0",
     "react": "19.2.8",
