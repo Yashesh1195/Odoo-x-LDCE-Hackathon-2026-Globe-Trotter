@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
-import { mockDestinations, mockTrips, mockBudgetSummary } from "@/app/lib/mockData";
+import { mockDestinations, mockBudgetSummary } from "@/app/lib/mockData";
 import type { DashboardData, Trip, TripStatus, User, BudgetSummary, Destination } from "@/app/lib/types";
 import { jwtVerify } from "jose";
+import { getLocationImage } from "@/app/lib/destinationImages";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "fallback_secret_for_hackathon"
@@ -13,54 +14,51 @@ function getUserPreferredRegion(country: string = "", city: string = ""): string
   const c = country.toLowerCase();
   const ci = city.toLowerCase();
 
+  // Indian state-level proximity for nearby recommendations
+  if (c.includes("india")) {
+    // West India cities
+    if (ci.includes("ahmedabad") || ci.includes("surat") || ci.includes("vadodara") || ci.includes("rajkot") || ci.includes("gandhinagar") || ci.includes("mumbai") || ci.includes("pune") || ci.includes("nashik")) {
+      return "West India";
+    }
+    // North India cities
+    if (ci.includes("delhi") || ci.includes("jaipur") || ci.includes("lucknow") || ci.includes("chandigarh") || ci.includes("shimla") || ci.includes("manali") || ci.includes("agra") || ci.includes("varanasi")) {
+      return "North India";
+    }
+    // South India cities
+    if (ci.includes("chennai") || ci.includes("bangalore") || ci.includes("bengaluru") || ci.includes("hyderabad") || ci.includes("kochi") || ci.includes("thiruvananthapuram") || ci.includes("mysore") || ci.includes("coimbatore")) {
+      return "South India";
+    }
+    // Default for other Indian cities — show West India (Gujarat, Goa, Rajasthan)
+    return "West India";
+  }
+
   if (
-    c.includes("germany") ||
-    c.includes("france") ||
-    c.includes("uk") ||
-    c.includes("united kingdom") ||
-    c.includes("italy") ||
-    c.includes("spain") ||
-    c.includes("greece") ||
-    c.includes("switzerland") ||
-    c.includes("europe") ||
-    ci.includes("munich") ||
-    ci.includes("paris") ||
-    ci.includes("london")
+    c.includes("germany") || c.includes("france") || c.includes("uk") ||
+    c.includes("united kingdom") || c.includes("italy") || c.includes("spain") ||
+    c.includes("greece") || c.includes("switzerland") || c.includes("europe") ||
+    ci.includes("munich") || ci.includes("paris") || ci.includes("london")
   ) {
     return "Europe";
   }
 
   if (
-    c.includes("japan") ||
-    c.includes("india") ||
-    c.includes("indonesia") ||
-    c.includes("thailand") ||
-    c.includes("china") ||
-    c.includes("asia") ||
-    ci.includes("tokyo") ||
-    ci.includes("bali") ||
-    ci.includes("mumbai") ||
-    ci.includes("delhi")
+    c.includes("japan") || c.includes("indonesia") || c.includes("thailand") ||
+    c.includes("china") || c.includes("asia") || ci.includes("tokyo") ||
+    ci.includes("bali")
   ) {
     return "Asia";
   }
 
   if (
-    c.includes("united states") ||
-    c.includes("usa") ||
-    c.includes("canada") ||
-    c.includes("america") ||
-    ci.includes("new york")
+    c.includes("united states") || c.includes("usa") || c.includes("canada") ||
+    c.includes("america") || ci.includes("new york")
   ) {
     return "North America";
   }
 
   if (
-    c.includes("uae") ||
-    c.includes("emirates") ||
-    c.includes("dubai") ||
-    c.includes("qatar") ||
-    c.includes("saudi")
+    c.includes("uae") || c.includes("emirates") || c.includes("dubai") ||
+    c.includes("qatar") || c.includes("saudi")
   ) {
     return "Middle East";
   }
@@ -144,7 +142,7 @@ export async function GET(request: NextRequest) {
     return {
       ...d,
       description: isPreferred
-        ? `[Top Regional Selection for ${userProfile.country || preferredRegion}] ${d.description}`
+        ? `Recommended near ${userProfile.city || preferredRegion} — ${d.description}`
         : d.description,
     };
   });
@@ -230,24 +228,14 @@ export async function GET(request: NextRequest) {
             name: `${dt.place} Journey`,
             destination: dt.place,
             country: dt.place.includes(",") ? dt.place.split(",")[1].trim() : "International",
-            image: dt.place.toLowerCase().includes("paris")
-              ? "/images/trip-paris.jpg"
-              : dt.place.toLowerCase().includes("bali")
-              ? "/images/trip-bali.jpg"
-              : dt.place.toLowerCase().includes("switzerland")
-              ? "/images/trip-switzerland.jpg"
-              : dt.place.toLowerCase().includes("tokyo")
-              ? "/images/trip-japan.jpg"
-              : dt.place.toLowerCase().includes("santorini")
-              ? "/images/dest-santorini.jpg"
-              : "/images/dest-dubai.jpg",
+            image: getLocationImage(dt.place),
             startDate: dt.startDate.toISOString().split("T")[0],
             endDate: dt.endDate.toISOString().split("T")[0],
             status,
             budget: {
               total: totalBudget,
               spent: Math.round(spent),
-              currency: "USD",
+              currency: "INR",
             },
             travelers: 2,
             activities,
@@ -259,10 +247,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // If user has no DB trips yet, seed/provide default starter trips for their account
-  if (userTrips.length === 0) {
-    userTrips = [...mockTrips];
-  }
+  // No mock trips — only show real DB trips for this user
 
   // Calculate dynamic stats
   const completedTripsCount = userTrips.filter((t) => t.status === "completed").length;
@@ -273,9 +258,9 @@ export async function GET(request: NextRequest) {
 
   userProfile.tripsCompleted = completedTripsCount;
 
-  // Format spent text for hero banner (e.g. $6.3K)
+  // Format spent text for hero banner in INR
   const spentInK = (calculatedTotalSpent / 1000).toFixed(1);
-  const totalSpentFormatted = `$${spentInK}K`;
+  const totalSpentFormatted = `₹${spentInK}K`;
 
   userProfile.stats = {
     tripsCompleted: completedTripsCount || userTrips.length,
@@ -318,7 +303,7 @@ export async function GET(request: NextRequest) {
     totalBudget: calculatedTotalBudget || mockBudgetSummary.totalBudget,
     totalSpent: calculatedTotalSpent || mockBudgetSummary.totalSpent,
     remaining: calculatedRemaining || mockBudgetSummary.remaining,
-    currency: "USD",
+    currency: "INR",
     categoryBreakdown: [
       { category: "Flights & Travel", amount: Math.round(calculatedTotalSpent * 0.38) },
       { category: "Hotels & Lodging", amount: Math.round(calculatedTotalSpent * 0.30) },

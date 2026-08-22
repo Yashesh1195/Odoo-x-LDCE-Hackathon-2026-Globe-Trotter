@@ -5,12 +5,12 @@ import type { TripPlanRequest } from "./types";
 
 let _client: GoogleGenAI | null = null;
 
-function getClient(): GoogleGenAI {
+export function getClient(): GoogleGenAI {
   if (!_client) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error(
-        "GEMINI_API_KEY is not set. Get a free key at https://aistudio.google.com and add it to your .env file."
+        "GEMINI_API_KEY is not set. Please configure GEMINI_API_KEY in your .env file."
       );
     }
     _client = new GoogleGenAI({ apiKey });
@@ -18,7 +18,15 @@ function getClient(): GoogleGenAI {
   return _client;
 }
 
-// ── Prompt Builder ─────────────────────────────────────────────────
+// ── Strictly 2-Model Fallback Chain ─────────────────────────────────
+// Primary: gemini-3.5-flash-lite (or gemini-2.5-flash-lite)
+// Fallback: gemini-3.1-flash-lite (or gemini-2.0-flash-lite)
+export const GEMINI_MODELS = [
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash-lite",
+];
+
+// ── Prompt Builders ─────────────────────────────────────────────────
 
 function computeTripDays(startDate: string, endDate: string): number {
   const start = new Date(startDate);
@@ -29,40 +37,24 @@ function computeTripDays(startDate: string, endDate: string): number {
   return Math.max(diff, 1);
 }
 
-function budgetDescription(level: string): string {
-  const map: Record<string, string> = {
-    budget: "Budget-friendly ($30–80/day). Hostels, street food, public transport.",
-    moderate: "Moderate ($80–180/day). Mid-range hotels, casual restaurants, mix of public & private transport.",
-    comfortable: "Comfortable ($180–350/day). 4-star hotels, good restaurants, private transport.",
-    luxury: "Luxury ($350–700/day). 5-star hotels, fine dining, private transfers.",
-    "ultra-luxury": "Ultra-Luxury ($700+/day). Palace-level hotels, Michelin dining, helicopter transfers.",
-  };
-  return map[level] ?? map.moderate;
-}
-
-function paceDescription(pace: string): string {
-  const map: Record<string, string> = {
-    relaxed: "Relaxed pace — 2-3 activities per day max, plenty of downtime and spontaneous exploration.",
-    moderate: "Moderate pace — 3-5 activities per day, balanced between sightseeing and rest.",
-    packed: "Packed pace — 5-7 activities per day, maximizing every moment with an action-packed schedule.",
-  };
-  return map[pace] ?? map.moderate;
-}
-
 export function buildTripPlanPrompt(request: TripPlanRequest): string {
   const days = computeTripDays(request.startDate, request.endDate);
 
-  return `You are GlobeTrotter AI — an expert AI travel assistant and master trip planner. You create comprehensive, highly detailed trip itineraries. You have deep knowledge of every destination worldwide, including local hidden gems, cultural nuances, seasonal events, and practical logistics.
+  return `You are GlobeTrotter AI — a world-class travel planner. Create an authentic, step-by-step, day-by-day itinerary for:
+- Destination: ${request.destination}
+- Dates: ${request.startDate} to ${request.endDate} (${days} days)
+- Travelers: ${request.travelers}
+- Budget: ${request.budgetLevel}
+- Pace: ${request.pace}
+- Interests: ${request.interests.join(", ")}
 
-## TRIP DETAILS
-- **Destination:** ${request.destination}
-- **Dates:** ${request.startDate} to ${request.endDate} (${days} days)
-- **Travelers:** ${request.travelers} ${request.travelers === 1 ? "person" : "people"}
-- **Budget:** ${budgetDescription(request.budgetLevel)}
-- **Pace:** ${paceDescription(request.pace)}
-- **Interests:** ${request.interests.join(", ")}
-${request.specialRequests ? `- **Special Requests:** ${request.specialRequests}` : ""}
+Generate a complete, structured itinerary with:
+1. Trip Overview & Highlights
+2. Quick Facts Table (Currency, Best Time, Transport)
+3. Step-by-Step Day-by-Day breakdown for all ${days} days with Morning, Afternoon, Evening activities and realistic estimated budgets.
+4. Total Budget Breakdown Table.
 
+<<<<<<< HEAD
 ## YOUR TASK
 Generate a **complete, actionable, highly detailed trip plan** in clean, professional Markdown. Be specific with real place names, real restaurants, real hotels, and realistic prices.
 
@@ -136,12 +128,15 @@ Categorized checklist:
 - Use **bold** for important names and numbers
 - Use tables where specified
 - Be specific — real place names, real prices, real addresses
-- Prices in USD
+- Prices in INR (₹)
 - Keep the tone professional, clean, and editorial — like a high-end travel magazine
 - Do NOT add any disclaimer about prices being estimates at the start or end`;
+=======
+Format cleanly in Markdown with bold headers and bullet points. No emojis.`;
+>>>>>>> 106c45a4aa35c9ca8f7d97697fece2c082f27136
 }
 
-// ── Streaming Generation ───────────────────────────────────────────
+// ── Streaming Generation with 2-Model Fallback ───────────────────────
 
 export async function* streamTripPlan(
   request: TripPlanRequest
@@ -149,24 +144,16 @@ export async function* streamTripPlan(
   const client = getClient();
   const prompt = buildTripPlanPrompt(request);
 
-  const candidateModels = [
-    "gemini-3.6-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-  ];
-
   let lastError: unknown = null;
 
-  for (const modelName of candidateModels) {
+  for (const modelName of GEMINI_MODELS) {
     try {
       const stream = await client.models.generateContentStream({
         model: modelName,
         contents: prompt,
         config: {
-          temperature: 0.9,
+          temperature: 0.8,
           maxOutputTokens: 8192,
-          topP: 0.95,
-          topK: 40,
         },
       });
 
@@ -178,42 +165,38 @@ export async function* streamTripPlan(
       }
       return;
     } catch (err) {
-      console.warn(`Model ${modelName} failed, trying next candidate...`, err);
+      console.warn(`Model ${modelName} failed, trying fallback...`, err);
       lastError = err;
     }
   }
 
-  throw lastError || new Error("All Gemini model candidates failed.");
+  throw lastError || new Error("Both Gemini flash-lite models failed.");
 }
 
-// ── Chatbot Generator ───────────────────────────────────────────────
+// ── Interactive Chat Stream with 2-Model Fallback ───────────────────
 
 export async function* streamChatMessages(
   messages: { role: "user" | "model" | "system"; content: string }[]
 ): AsyncGenerator<string> {
   const client = getClient();
 
-  const systemInstruction = `You are GlobeTrotter AI Assistant — a smart, refined, and highly knowledgeable travel concierge.
+  const systemInstruction = `You are GlobeTrotter AI Concierge — an expert conversational trip planner.
+When the user asks to plan a trip (e.g. to Shimla, Gujarat, Paris, Kashmir, etc.), converse naturally and provide:
+1. An inspiring summary of the destination.
+2. A clear, step-by-step Day-by-Day itinerary with Morning, Afternoon, Evening activities.
+3. Realistic estimated budget per section.
+4. Local food and landmark recommendations.
 
-CORE BEHAVIOR RULES:
-1. PRECISE & DIRECT BY DEFAULT: Answer precisely and directly to what the user asked. Do not provide unnecessary long intros, unprompted boilerplate, or unwanted full itineraries unless requested.
-2. CONDITIONAL DETAIL: Only provide exhaustive, multi-day detailed itineraries with tables and full Where & When breakdowns IF the user explicitly asks for a "detailed plan", "full itinerary", "plan in detail", or similar. For general or specific queries (e.g. "What to eat in Tokyo?", "Weather in Paris in October?"), give concise, direct, high-value answers.
-3. ZERO EMOJIS: Do NOT use any emojis anywhere in your response. Keep formatting clean, professional, and elegant using clear Markdown typography, bold text, and bullet points.`;
+Keep your tone sophisticated, editorial, and helpful. Use clean Markdown styling. Do NOT use emojis.`;
 
   const contents = messages.map((msg) => ({
     role: msg.role === "user" ? "user" : "model",
     parts: [{ text: msg.content }],
   }));
 
-  const candidateModels = [
-    "gemini-3.6-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-  ];
-
   let lastError: unknown = null;
 
-  for (const modelName of candidateModels) {
+  for (const modelName of GEMINI_MODELS) {
     try {
       const stream = await client.models.generateContentStream({
         model: modelName,
@@ -222,7 +205,7 @@ CORE BEHAVIOR RULES:
           ...contents,
         ],
         config: {
-          temperature: 0.8,
+          temperature: 0.7,
           maxOutputTokens: 4096,
         },
       });
@@ -235,10 +218,10 @@ CORE BEHAVIOR RULES:
       }
       return;
     } catch (err) {
-      console.warn(`Chat model ${modelName} failed, trying next candidate...`, err);
+      console.warn(`Chat model ${modelName} failed, trying fallback...`, err);
       lastError = err;
     }
   }
 
-  throw lastError || new Error("All Gemini chat candidates failed.");
+  throw lastError || new Error("Both Gemini chat models failed.");
 }

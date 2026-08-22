@@ -115,7 +115,7 @@ export default function AddTeamRouteModal({
       budget: {
         total: sample.budgetTotal,
         spent: sample.budgetSpent,
-        currency: "USD",
+        currency: "INR",
       },
       travelers: sample.travelers,
       activities: sample.activities,
@@ -147,7 +147,7 @@ export default function AddTeamRouteModal({
           .toISOString()
           .split("T")[0],
         status: "upcoming",
-        budget: { total: 3000, spent: 0, currency: "USD" },
+        budget: { total: 3000, spent: 0, currency: "INR" },
         travelers: 2,
         activities: ["Team Itinerary Activity 1", "Team Itinerary Activity 2"],
       };
@@ -179,7 +179,7 @@ export default function AddTeamRouteModal({
       budget: {
         total: parseFloat(budgetTotal) || 2000,
         spent: 0,
-        currency: "USD",
+        currency: "INR",
       },
       travelers,
       activities: parsedActivities,

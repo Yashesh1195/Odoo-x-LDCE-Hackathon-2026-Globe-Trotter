@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     budget: {
       total: body.budget ?? 0,
       spent: 0,
-      currency: "USD",
+      currency: "INR",
     },
     travelers: body.travelers ?? 1,
     activities: body.activities ?? [],
