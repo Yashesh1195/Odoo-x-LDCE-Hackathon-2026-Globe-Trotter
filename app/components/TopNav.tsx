@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+<<<<<<< Updated upstream
 import { useRouter, usePathname } from "next/navigation";
+=======
+import { usePathname } from "next/navigation";
+import { getUserProfile, type UserProfileData } from "../actions/profile";
+>>>>>>> Stashed changes
 
 interface TopNavProps {
   user?: {
@@ -17,6 +22,7 @@ interface TopNavProps {
 
 export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+<<<<<<< Updated upstream
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [localUser, setLocalUser] = useState<{
     firstName?: string;
@@ -79,6 +85,32 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
       active: isExact || isPrefix,
     };
   });
+=======
+  const [user, setUser] = useState<UserProfileData | null>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await getUserProfile();
+        if (res.success && res.user) {
+          setUser(res.user);
+        }
+      } catch (err) {
+        console.error("Failed to load user in TopNav:", err);
+      }
+    }
+    loadUser();
+  }, []);
+
+  const navLinks = [
+    { label: "Dashboard", href: "/dashboard", active: pathname === "/dashboard" },
+    { label: "My Trips", href: "/trips", active: pathname === "/trips" },
+    { label: "Plan a Trip", href: "/trip/new", active: pathname === "/trip/new" },
+  ];
+>>>>>>> Stashed changes
+
+  const isProfileActive = pathname === "/profile";
 
   return (
     <nav
@@ -113,7 +145,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
           </span>
         </Link>
 
-        {/* ── Desktop Nav ── */}
+        {/* ── Desktop Nav (No separate Profile link) ── */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
@@ -143,6 +175,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
           ))}
         </div>
 
+<<<<<<< Updated upstream
         {/* ── Profile Avatar & Dropdown ── */}
         <div className="flex items-center gap-3 relative">
           <button
@@ -156,7 +189,25 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
               fontSize: 14,
               fontWeight: 700,
               letterSpacing: "0.5px",
+=======
+        {/* ── Profile Avatar in Top-Right with User Photo ── */}
+        <div className="flex items-center gap-3">
+          <Link
+            id="profile-avatar"
+            href="/profile"
+            className="flex items-center justify-center overflow-hidden transition-all no-underline relative group cursor-pointer"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "9999px",
+              border: isProfileActive
+                ? "2px solid var(--primary)"
+                : "2px solid var(--hairline-strong)",
+              backgroundColor: "var(--surface-soft)",
+              boxShadow: isProfileActive ? "0 0 0 2px rgba(28,105,212,0.25)" : "none",
+>>>>>>> Stashed changes
             }}
+            title={user ? `${user.firstName} ${user.lastName} (View Profile)` : "View Profile"}
             aria-label="User profile"
             title={
               activeUser
@@ -164,8 +215,29 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                 : "User Profile"
             }
           >
+<<<<<<< Updated upstream
             {getInitials()}
           </button>
+=======
+            {user?.photoUrl ? (
+              <img
+                src={user.photoUrl}
+                alt={user.firstName || "User profile"}
+                className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform"
+              />
+            ) : (
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: isProfileActive ? "var(--primary)" : "var(--ink)",
+                }}
+              >
+                {user?.firstName ? `${user.firstName[0]}${user.lastName?.[0] || ""}` : "GT"}
+              </span>
+            )}
+          </Link>
+>>>>>>> Stashed changes
 
           {/* User Profile Dropdown Menu */}
           {userMenuOpen && (

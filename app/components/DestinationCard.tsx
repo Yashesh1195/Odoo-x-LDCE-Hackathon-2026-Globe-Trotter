@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import type { Destination } from "@/app/lib/types";
+import { getLocationImage } from "@/app/lib/destinationImages";
 
 interface DestinationCardProps {
   destination: Destination;
@@ -14,6 +15,9 @@ export default function DestinationCard({
   index,
 }: DestinationCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const destinationPhoto = destination.image?.startsWith("http")
+    ? destination.image
+    : getLocationImage(destination.name);
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -68,7 +72,7 @@ export default function DestinationCard({
         }}
       >
         <Image
-          src={destination.image}
+          src={destinationPhoto}
           alt={`${destination.name}, ${destination.country}`}
           fill
           className="object-cover transition-transform"

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+<<<<<<< Updated upstream
 import { prisma } from "@/app/lib/db";
 import { mockDestinations, mockTrips, mockBudgetSummary } from "@/app/lib/mockData";
 import type { DashboardData, Trip, TripStatus, User, BudgetSummary, Destination } from "@/app/lib/types";
@@ -67,6 +68,15 @@ function getUserPreferredRegion(country: string = "", city: string = ""): string
 
   return "Europe";
 }
+=======
+import {
+  mockDestinations,
+  mockTrips,
+  mockBudgetSummary,
+} from "@/app/lib/mockData";
+import { getUserProfile } from "@/app/actions/profile";
+import type { DashboardData, User } from "@/app/lib/types";
+>>>>>>> Stashed changes
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -86,6 +96,7 @@ export async function GET(request: NextRequest) {
 
   const reqUserId = tokenUserId || searchParams.get("userId");
 
+<<<<<<< Updated upstream
   let activeUser: any = null;
 
   try {
@@ -102,6 +113,32 @@ export async function GET(request: NextRequest) {
     }
   } catch (err) {
     console.warn("DB user lookup error in dashboard route:", err);
+=======
+  // ── Fetch Synchronized User Profile ──
+  const profileRes = await getUserProfile();
+  const profileUser = profileRes.user;
+
+  const user: User = {
+    id: profileUser?.id || "user-001",
+    name: `${profileUser?.firstName || "Priyanshu"} ${profileUser?.lastName || "Sharma"}`,
+    firstName: profileUser?.firstName || "Priyanshu",
+    email: profileUser?.email || "priyanshu@globetrotter.com",
+    avatar: profileUser?.photoUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+    memberSince: profileUser?.memberSince || "March 2024",
+    tripsCompleted: profileUser?.tripsCount || 6,
+  };
+
+  // ── Filter destinations by search query ──
+  let destinations = [...mockDestinations];
+  if (query) {
+    destinations = destinations.filter(
+      (d) =>
+        d.name.toLowerCase().includes(query) ||
+        d.country.toLowerCase().includes(query) ||
+        d.region.toLowerCase().includes(query) ||
+        d.tags.some((t) => t.toLowerCase().includes(query))
+    );
+>>>>>>> Stashed changes
   }
 
   // Define User profile
@@ -308,6 +345,7 @@ export async function GET(request: NextRequest) {
     return order === "desc" ? -cmp : cmp;
   });
 
+<<<<<<< Updated upstream
   // Calculate dynamic budget summary
   const budgetSummary: BudgetSummary = {
     totalBudget: calculatedTotalBudget || mockBudgetSummary.totalBudget,
@@ -325,6 +363,10 @@ export async function GET(request: NextRequest) {
 
   const data: DashboardData & { preferredRegion?: string } = {
     user: userProfile,
+=======
+  const data: DashboardData = {
+    user,
+>>>>>>> Stashed changes
     destinations,
     trips: filteredTrips,
     budgetSummary,
