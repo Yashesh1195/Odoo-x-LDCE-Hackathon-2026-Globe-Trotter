@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-<<<<<<< HEAD
-import { usePathname } from "next/navigation";
-=======
-import { useRouter } from "next/navigation";
->>>>>>> 6dd6caba6b5d1a18087f722447e58d69e7bae073
+import { useRouter, usePathname } from "next/navigation";
 
 interface TopNavProps {
   user?: {
@@ -21,9 +17,6 @@ interface TopNavProps {
 
 export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-<<<<<<< HEAD
-  const pathname = usePathname() || "";
-=======
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [localUser, setLocalUser] = useState<{
     firstName?: string;
@@ -34,6 +27,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
     country?: string;
   } | null>(null);
   const router = useRouter();
+  const pathname = usePathname() || "";
 
   useEffect(() => {
     try {
@@ -69,28 +63,22 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const handleLogout = () => {
     localStorage.removeItem("gt_user");
     document.cookie = "gt_user_id=; path=/; max-age=0";
+    document.cookie = "auth_token=; path=/; max-age=0";
     router.push("/login");
   };
->>>>>>> 6dd6caba6b5d1a18087f722447e58d69e7bae073
 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Search Activity", href: "/activity/search" },
     { label: "My Trips", href: "/trips" },
-<<<<<<< HEAD
-    { label: "Destinations", href: "/dashboard#destinations" },
-    { label: "Budget", href: "/dashboard#budget" },
-  ].map(link => ({
-    ...link,
-    active: link.href === "/dashboard" 
-      ? pathname === "/dashboard" 
-      : pathname.startsWith(link.href.split("#")[0])
-  }));
-=======
-    { label: "Destinations", href: "/dashboard#top-regional-selections" },
-    { label: "Budget", href: "/dashboard#budget-summary" },
-  ];
->>>>>>> 6dd6caba6b5d1a18087f722447e58d69e7bae073
+  ].map((link) => {
+    const isExact = pathname === link.href;
+    const isPrefix = link.href !== "/dashboard" && pathname.startsWith(link.href);
+    return {
+      ...link,
+      active: isExact || isPrefix,
+    };
+  });
 
   return (
     <nav
