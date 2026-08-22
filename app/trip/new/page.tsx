@@ -288,24 +288,15 @@ export default function PlanTripPage() {
         {/* ── Top Navigation ── */}
         <TopNav />
 
-<<<<<<< HEAD
-        {/* Hero Band */}
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 border-b border-black">
-          <div className="max-w-[1440px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-=======
         {/* ── Header Band ── */}
         <section
           id="plan-hero"
-          style={{
-            backgroundColor: "var(--surface-dark)",
-            padding: "48px 0 36px",
-          }}
+          className="bg-[var(--surface-dark)] py-12 sm:py-16"
         >
           <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
->>>>>>> aacfafaccabe21c1bcaffea28262db07b7e4df37
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[12px] font-bold uppercase tracking-[2px] text-[var(--primary-light)]">
+                <span className="text-[12px] font-bold uppercase tracking-[2px] text-[var(--primary)]">
                   Trip Planner
                 </span>
               </div>
