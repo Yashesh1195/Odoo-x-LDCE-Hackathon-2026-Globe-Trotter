@@ -57,6 +57,12 @@ export default function TripsListingPage() {
     completed: false,
   });
 
+  // Filter state: which categories to show
+  const [filterCategory, setFilterCategory] = useState<"all" | TripCategory>("all");
+
+  // Group by state
+  const [groupBy, setGroupBy] = useState<"status" | "none">("status");
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
@@ -121,6 +127,18 @@ export default function TripsListingPage() {
     { value: "date", label: "Date" },
   ];
 
+  const filterOptions: { value: "all" | TripCategory; label: string }[] = [
+    { value: "all", label: "All Trips" },
+    { value: "ongoing", label: "Ongoing" },
+    { value: "upcoming", label: "Upcoming" },
+    { value: "completed", label: "Completed" },
+  ];
+
+  const groupOptions: { value: "status" | "none"; label: string }[] = [
+    { value: "status", label: "Status" },
+    { value: "none", label: "No Grouping" },
+  ];
+
   const buttonBaseStyle: React.CSSProperties = {
     backgroundColor: "var(--canvas)",
     color: "var(--ink)",
@@ -136,6 +154,31 @@ export default function TripsListingPage() {
     gap: 6,
     whiteSpace: "nowrap" as const,
   };
+
+  const dropdownMenuStyle: React.CSSProperties = {
+    position: "absolute",
+    top: "100%",
+    right: 0,
+    marginTop: 4,
+    backgroundColor: "white",
+    border: "1px solid var(--hairline)",
+    zIndex: 20,
+    minWidth: 170,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  };
+
+  const dropdownItemStyle = (isActive: boolean): React.CSSProperties => ({
+    display: "block",
+    width: "100%",
+    textAlign: "left" as const,
+    padding: "10px 16px",
+    fontSize: 14,
+    fontWeight: isActive ? 700 : 300,
+    color: isActive ? "var(--primary)" : "var(--body)",
+    border: "none",
+    backgroundColor: "transparent",
+    cursor: "pointer",
+  });
 
   const sectionHeaderStyle = (
     category: TripCategory,
@@ -267,6 +310,61 @@ export default function TripsListingPage() {
     );
   };
 
+  // Flat list rendering (no grouping)
+  const renderFlatList = (allTrips: DbTrip[]) => {
+    if (allTrips.length === 0) {
+      return (
+        <div
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            color: "var(--muted)",
+            fontSize: 14,
+            fontWeight: 300,
+            backgroundColor: "var(--surface-soft)",
+            border: "1px solid var(--hairline)",
+          }}
+        >
+          No trips found
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-3">
+        {allTrips.map((trip, i) => {
+          // Determine category for styling
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const start = new Date(trip.startDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(trip.endDate);
+          end.setHours(0, 0, 0, 0);
+          let cat: TripCategory = "completed";
+          if (start <= today && end >= today) cat = "ongoing";
+          else if (start > today) cat = "upcoming";
+
+          return (
+            <TripOverviewCard
+              key={trip.id}
+              trip={trip}
+              index={i}
+              computedStatus={cat}
+              onClick={() => handleTripClick(trip, cat)}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Get filtered trips based on filterCategory
+  const getFilteredTrips = (): DbTrip[] => {
+    if (filterCategory === "all") return trips;
+    const cat = categorizeTrips(trips);
+    return cat[filterCategory];
+  };
+
   // Loading skeleton
   if (loading && trips.length === 0) {
     return (
@@ -300,6 +398,10 @@ export default function TripsListingPage() {
     );
   }
 
+  // Active filter/sort/group indicator labels
+  const activeFilterLabel = filterOptions.find((o) => o.value === filterCategory)?.label || "All";
+  const activeGroupLabel = groupOptions.find((o) => o.value === groupBy)?.label || "Status";
+
   return (
     <div className="min-h-screen bg-white">
       {/* ── Navigation ── */}
@@ -310,10 +412,10 @@ export default function TripsListingPage() {
         id="trips-hero"
         style={{
           backgroundColor: "var(--surface-dark)",
-          padding: "48px 0 40px",
+          padding: "48px 24px 40px",
         }}
       >
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
+        <div className="max-w-[1440px] mx-auto">
           <p
             style={{
               fontSize: 13,
@@ -355,8 +457,8 @@ export default function TripsListingPage() {
       {/* ── Search & Filter Bar ── */}
       <div
         ref={dropdownRef}
-        className="max-w-[1440px] mx-auto px-6 lg:px-10"
-        style={{ paddingTop: 24 }}
+        className="max-w-[1440px] mx-auto"
+        style={{ padding: "24px 24px 0" }}
       >
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {/* Search Input */}
@@ -405,7 +507,7 @@ export default function TripsListingPage() {
                 style={{
                   ...buttonBaseStyle,
                   borderColor:
-                    openDropdown === "group"
+                    openDropdown === "group" || groupBy !== "status"
                       ? "var(--ink)"
                       : "var(--hairline-strong)",
                 }}
@@ -422,15 +524,47 @@ export default function TripsListingPage() {
                   <rect x="3" y="14" width="7" height="7" />
                   <rect x="14" y="14" width="7" height="7" />
                 </svg>
-                <span className="hidden sm:inline">Group by</span>
+                <span className="hidden sm:inline">Group: {activeGroupLabel}</span>
               </button>
+              {openDropdown === "group" && (
+                <div
+                  className="animate-fadeIn"
+                  style={dropdownMenuStyle}
+                >
+                  {groupOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setGroupBy(opt.value);
+                        setOpenDropdown(null);
+                      }}
+                      className="hover:bg-[var(--surface-soft)] transition-colors"
+                      style={dropdownItemStyle(groupBy === opt.value)}
+                    >
+                      {groupBy === opt.value && (
+                        <span style={{ marginRight: 6, color: "var(--primary)" }}>✓</span>
+                      )}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Filter */}
             <div className="relative">
               <button
                 id="trips-filter-btn"
-                style={buttonBaseStyle}
+                onClick={() =>
+                  setOpenDropdown(openDropdown === "filter" ? null : "filter")
+                }
+                style={{
+                  ...buttonBaseStyle,
+                  borderColor:
+                    openDropdown === "filter" || filterCategory !== "all"
+                      ? "var(--ink)"
+                      : "var(--hairline-strong)",
+                }}
               >
                 <svg
                   style={{ width: 14, height: 14 }}
@@ -441,8 +575,33 @@ export default function TripsListingPage() {
                 >
                   <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
                 </svg>
-                <span className="hidden sm:inline">Filter</span>
+                <span className="hidden sm:inline">
+                  {filterCategory !== "all" ? `Filter: ${activeFilterLabel}` : "Filter"}
+                </span>
               </button>
+              {openDropdown === "filter" && (
+                <div
+                  className="animate-fadeIn"
+                  style={dropdownMenuStyle}
+                >
+                  {filterOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setFilterCategory(opt.value);
+                        setOpenDropdown(null);
+                      }}
+                      className="hover:bg-[var(--surface-soft)] transition-colors"
+                      style={dropdownItemStyle(filterCategory === opt.value)}
+                    >
+                      {filterCategory === opt.value && (
+                        <span style={{ marginRight: 6, color: "var(--primary)" }}>✓</span>
+                      )}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Sort By */}
@@ -471,12 +630,12 @@ export default function TripsListingPage() {
                   <line x1="4" y1="12" x2="16" y2="12" />
                   <line x1="4" y1="18" x2="12" y2="18" />
                 </svg>
-                <span className="hidden sm:inline">Sort by...</span>
+                <span className="hidden sm:inline">Sort: {sortField === "name" ? "Name" : "Date"}</span>
               </button>
               {openDropdown === "sort" && (
                 <div
-                  className="absolute top-full right-0 mt-1 bg-white border border-[var(--hairline)] z-20 animate-fadeIn"
-                  style={{ minWidth: 160 }}
+                  className="animate-fadeIn"
+                  style={dropdownMenuStyle}
                 >
                   {sortOptions.map((opt) => (
                     <button
@@ -485,20 +644,12 @@ export default function TripsListingPage() {
                         setSortField(opt.value);
                         setOpenDropdown(null);
                       }}
-                      className="block w-full text-left hover:bg-[var(--surface-soft)] transition-colors"
-                      style={{
-                        padding: "10px 16px",
-                        fontSize: 14,
-                        fontWeight: sortField === opt.value ? 700 : 300,
-                        color:
-                          sortField === opt.value
-                            ? "var(--primary)"
-                            : "var(--body)",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        cursor: "pointer",
-                      }}
+                      className="hover:bg-[var(--surface-soft)] transition-colors"
+                      style={dropdownItemStyle(sortField === opt.value)}
                     >
+                      {sortField === opt.value && (
+                        <span style={{ marginRight: 6, color: "var(--primary)" }}>✓</span>
+                      )}
                       {opt.label}
                     </button>
                   ))}
@@ -507,6 +658,75 @@ export default function TripsListingPage() {
             </div>
           </div>
         </div>
+
+        {/* Active filters summary */}
+        {(filterCategory !== "all" || groupBy !== "status") && (
+          <div
+            className="flex items-center gap-2 flex-wrap mt-3"
+            style={{ fontSize: 12, color: "var(--muted)" }}
+          >
+            {filterCategory !== "all" && (
+              <span
+                className="flex items-center gap-1"
+                style={{
+                  backgroundColor: "var(--surface-soft)",
+                  padding: "4px 10px",
+                  border: "1px solid var(--hairline)",
+                  fontWeight: 700,
+                  color: "var(--ink)",
+                }}
+              >
+                Filter: {activeFilterLabel}
+                <button
+                  onClick={() => setFilterCategory("all")}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    color: "var(--muted)",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: "0 2px",
+                    lineHeight: 1,
+                  }}
+                  title="Clear filter"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {groupBy !== "status" && (
+              <span
+                className="flex items-center gap-1"
+                style={{
+                  backgroundColor: "var(--surface-soft)",
+                  padding: "4px 10px",
+                  border: "1px solid var(--hairline)",
+                  fontWeight: 700,
+                  color: "var(--ink)",
+                }}
+              >
+                Group: {activeGroupLabel}
+                <button
+                  onClick={() => setGroupBy("status")}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    color: "var(--muted)",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: "0 2px",
+                    lineHeight: 1,
+                  }}
+                  title="Reset grouping"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Trip Sections ── */}
@@ -515,9 +735,18 @@ export default function TripsListingPage() {
         className="max-w-[1440px] mx-auto"
         style={{ padding: "32px 24px 80px" }}
       >
-        {renderSection("ongoing", "Ongoing", categorized.ongoing)}
-        {renderSection("upcoming", "Upcoming", categorized.upcoming)}
-        {renderSection("completed", "Completed", categorized.completed)}
+        {groupBy === "status" ? (
+          <>
+            {(filterCategory === "all" || filterCategory === "ongoing") &&
+              renderSection("ongoing", "Ongoing", categorized.ongoing)}
+            {(filterCategory === "all" || filterCategory === "upcoming") &&
+              renderSection("upcoming", "Upcoming", categorized.upcoming)}
+            {(filterCategory === "all" || filterCategory === "completed") &&
+              renderSection("completed", "Completed", categorized.completed)}
+          </>
+        ) : (
+          renderFlatList(getFilteredTrips())
+        )}
       </main>
 
       {/* ── Footer ── */}
