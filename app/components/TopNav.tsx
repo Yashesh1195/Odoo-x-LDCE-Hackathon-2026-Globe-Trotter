@@ -67,6 +67,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard", active: true },
+    { label: "Search Activity", href: "/activity/search" },
     { label: "My Trips", href: "/trips" },
     { label: "Destinations", href: "/dashboard#top-regional-selections" },
     { label: "Budget", href: "/dashboard#budget-summary" },

@@ -2,6 +2,27 @@
 
 import { prisma } from "../lib/db";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
+import { SignJWT } from "jose";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "fallback_secret_for_hackathon"
+);
+
+async function setAuthCookie(userId: string) {
+  const token = await new SignJWT({ userId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(JWT_SECRET);
+
+  const cookieStore = await cookies();
+  cookieStore.set("auth_token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: "/",
+  });
+}
 
 export async function registerUser(data: any) {
   try {
@@ -29,6 +50,7 @@ export async function registerUser(data: any) {
       },
     });
 
+<<<<<<< HEAD
     return {
       success: true,
       user: {
@@ -42,6 +64,11 @@ export async function registerUser(data: any) {
         photoUrl: newUser.photoUrl,
       },
     };
+=======
+    await setAuthCookie(newUser.id);
+
+    return { success: true, user: { id: newUser.id, email: newUser.email, firstName: newUser.firstName } };
+>>>>>>> 8613b333239a0958a9d4d57ca57f16f18daf9c53
   } catch (error) {
     console.error("Registration error:", error);
     return { error: "An error occurred during registration. Please try again." };
@@ -64,6 +91,7 @@ export async function loginUser(data: any) {
       return { error: "Invalid username or password." };
     }
 
+<<<<<<< HEAD
     return {
       success: true,
       user: {
@@ -77,6 +105,11 @@ export async function loginUser(data: any) {
         photoUrl: user.photoUrl,
       },
     };
+=======
+    await setAuthCookie(user.id);
+
+    return { success: true, user: { id: user.id, email: user.email, firstName: user.firstName } };
+>>>>>>> 8613b333239a0958a9d4d57ca57f16f18daf9c53
   } catch (error) {
     console.error("Login error:", error);
     return { error: "An error occurred during login. Please try again." };

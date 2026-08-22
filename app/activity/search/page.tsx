@@ -1,0 +1,212 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import TopNav from "../../components/TopNav";
+import { searchActivity } from "../../actions/activity";
+
+interface ActivityResult {
+  title: string;
+  description: string;
+  price: string;
+  bestTime: string;
+}
+
+interface UserLocation {
+  city: string;
+  country: string;
+}
+
+export default function SearchActivityPage() {
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<ActivityResult[]>([]);
+  const [error, setError] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  
+  // Location state
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationLoading, setLocationLoading] = useState(true);
+
+  // Fetch user location automatically on mount
+  useEffect(() => {
+    async function fetchLocation() {
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.city && data.country_name) {
+            setUserLocation({ city: data.city, country: data.country_name });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch location automatically:", err);
+      } finally {
+        setLocationLoading(false);
+      }
+    }
+    fetchLocation();
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setError("");
+    setHasSearched(true);
+
+    const res = await searchActivity(query, userLocation || undefined);
+    
+    if (res.error) {
+      setError(res.error);
+      setResults([]);
+    } else if (res.success && res.results) {
+      setResults(res.results);
+    }
+    
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--ink)]">
+      <TopNav />
+
+      {/* Hero Band with Search */}
+      <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-[60px] px-8 md:px-16 lg:px-32 border-b-4 border-[var(--primary)] relative overflow-hidden">
+        {/* Subtle BMW-style watermark/graphic in background */}
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 pointer-events-none flex items-center justify-end overflow-hidden">
+            <span className="text-[250px] font-bold leading-none select-none tracking-tighter">GT</span>
+        </div>
+
+        <div className="max-w-[1000px] mx-auto relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-2 h-2 bg-[var(--primary)]"></span>
+            <span className="text-[12px] font-bold uppercase tracking-[2px] text-[var(--primary)]">Global Discoveries</span>
+          </div>
+          
+          <h1 className="text-[40px] md:text-[56px] font-bold leading-[1.05] mb-6 tracking-tight">
+            Search Activity or City
+          </h1>
+          <p className="text-[16px] md:text-[18px] font-light text-[var(--on-dark-soft)] mb-10 max-w-2xl leading-relaxed">
+            Discover the absolute best places in the world to experience your favorite activities, or explore top landmarks in any city.
+            {!locationLoading && userLocation && (
+              <span className="block mt-2 text-[#b0d4ff]">
+                🌍 Auto-detect active: Prioritizing spots near <strong className="font-bold">{userLocation.city}, {userLocation.country}</strong>.
+              </span>
+            )}
+          </p>
+
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 max-w-3xl">
+            <div className="flex-1 relative">
+              <input 
+                type="text" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="e.g. Paragliding, Paris, Scuba Diving, Ahmedabad..."
+                className="w-full bg-white text-[var(--ink)] h-[60px] px-6 rounded-none border-none text-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] font-light placeholder:text-[var(--muted)]"
+              />
+            </div>
+            <button 
+              type="submit" 
+              disabled={loading || !query.trim()}
+              className="bmw-button-primary h-[60px] px-10 uppercase tracking-[1.5px] font-bold text-[14px] disabled:bg-[#004e9a] disabled:text-[#80a6cd] shadow-none hover:shadow-lg transition-all"
+            >
+              {loading ? "Curating..." : "Search"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Results Section */}
+      <main className="max-w-[1000px] mx-auto px-8 md:px-16 lg:px-32 py-[60px]">
+        
+        {/* Wireframe specific filters header */}
+        {hasSearched && !loading && !error && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 border-b border-[var(--hairline-strong)] pb-4 gap-4">
+            <h2 className="text-[28px] font-bold text-[var(--ink)] tracking-tight">Curated Results</h2>
+            <div className="flex flex-wrap gap-3">
+              <button className="h-10 px-6 border border-[var(--ink)] bg-transparent text-[12px] font-bold uppercase tracking-[1.5px] hover:bg-[var(--ink)] hover:text-white transition-colors cursor-pointer">Group by</button>
+              <button className="h-10 px-6 border border-[var(--ink)] bg-transparent text-[12px] font-bold uppercase tracking-[1.5px] hover:bg-[var(--ink)] hover:text-white transition-colors cursor-pointer">Filter</button>
+              <button className="h-10 px-6 border border-[var(--ink)] bg-transparent text-[12px] font-bold uppercase tracking-[1.5px] hover:bg-[var(--ink)] hover:text-white transition-colors cursor-pointer">Sort by...</button>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-[3px] border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-6"></div>
+            <p className="text-[14px] font-bold text-[var(--ink)] tracking-[2px] uppercase">Curating Premium Destinations...</p>
+          </div>
+        ) : error ? (
+          <div className="p-6 bg-red-50 border-l-4 border-red-600 text-red-800 font-medium">
+            {error}
+          </div>
+        ) : hasSearched && results.length === 0 ? (
+          <div className="p-16 text-center text-[var(--ink)] font-light border border-[var(--hairline-strong)] bg-white">
+            <p className="text-xl mb-2">No specific recommendations found.</p>
+            <p className="text-[var(--muted)]">Please refine your search and try again.</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {results.map((result, idx) => (
+              <div 
+                key={idx} 
+                className="flex flex-col md:flex-row border border-[var(--hairline-strong)] bg-white hover:border-[var(--primary)] hover:shadow-xl transition-all duration-300 group overflow-hidden"
+              >
+                {/* Photo Side */}
+                <div className="w-full md:w-[35%] h-64 md:h-auto bg-[var(--surface-soft)] relative overflow-hidden shrink-0 border-b md:border-b-0 md:border-r border-[var(--hairline-strong)]">
+                  {/* Random image based on title seed for consistent stunning placeholder */}
+                  <img 
+                    src={`https://picsum.photos/seed/${encodeURIComponent(result.title)}/800/600`} 
+                    alt={result.title} 
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                  />
+                  {/* Subtle gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                  
+                  {/* Badge */}
+                  <div className="absolute top-4 left-4 bg-white text-[var(--ink)] text-[10px] font-bold uppercase tracking-[1.5px] px-3 py-1.5 shadow-sm">
+                    Top Pick
+                  </div>
+                </div>
+
+                {/* Content Side */}
+                <div className="p-8 md:p-10 flex flex-col justify-between flex-1 relative">
+                  {/* Top content */}
+                  <div className="mb-8">
+                    <h3 className="text-[24px] md:text-[28px] font-bold mb-4 text-[var(--ink)] group-hover:text-[var(--primary)] transition-colors leading-tight tracking-tight">
+                      {result.title}
+                    </h3>
+                    <p className="text-[16px] font-light text-[var(--body)] leading-relaxed md:line-clamp-3">
+                      {result.description}
+                    </p>
+                  </div>
+                  
+                  {/* Bottom metrics / tags */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 pt-6 border-t border-[var(--hairline-strong)]">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-bold uppercase tracking-[2px] text-[var(--primary)] mb-1">Best Season</span>
+                      <span className="text-[18px] font-bold text-[var(--ink)]">{result.bestTime}</span>
+                    </div>
+
+                    <div className="hidden sm:block w-[1px] h-12 bg-[var(--hairline-strong)]"></div>
+
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-bold uppercase tracking-[2px] text-[var(--primary)] mb-1">Est. Budget</span>
+                      <span className="text-[18px] font-bold text-[var(--ink)]">{result.price}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+      
+      {/* Footer */}
+      <footer className="w-full bg-[var(--surface-soft)] border-t border-[var(--hairline)] py-12 px-8 text-center text-[13px] font-light text-[var(--muted)] mt-auto">
+        <p>© {new Date().getFullYear()} GT - Globe Trotter. All rights reserved.</p>
+      </footer>
+    </div>
+  );
+}
