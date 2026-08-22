@@ -37,6 +37,24 @@ export default function Home() {
         >
           /register
         </Link>
+        <Link
+          href="/dashboard"
+          className="px-3 py-1.5 font-bold uppercase tracking-wider transition-colors cursor-pointer text-[#bbbbbb] hover:text-white bg-[#262e38]"
+        >
+          /dashboard
+        </Link>
+        <Link
+          href="/trips"
+          className="px-3 py-1.5 font-bold uppercase tracking-wider transition-colors cursor-pointer text-[#bbbbbb] hover:text-white bg-[#262e38]"
+        >
+          /trips
+        </Link>
+        <Link
+          href="/profile"
+          className="px-3 py-1.5 font-bold uppercase tracking-wider transition-colors cursor-pointer text-[#bbbbbb] hover:text-white bg-[#262e38]"
+        >
+          /profile
+        </Link>
       </aside>
 
       {/* Screen Render */}
