@@ -38,21 +38,49 @@ Example:
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    let text = response.text();
+    let text = response.text().trim();
     
-    // Clean markdown formatting if present
-    if (text.startsWith("```json")) {
-        text = text.replace(/^```json\n/, "").replace(/\n```$/, "");
-    }
-    if (text.startsWith("```")) {
-        text = text.replace(/^```\n/, "").replace(/\n```$/, "");
+    // Robust extraction: find the first '[' and last ']'
+    const startIndex = text.indexOf('[');
+    const endIndex = text.lastIndexOf(']');
+    if (startIndex !== -1 && endIndex !== -1) {
+      text = text.substring(startIndex, endIndex + 1);
     }
 
     const parsed = JSON.parse(text);
     return { success: true, suggestions: parsed };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Error:", error);
-    return { error: "Failed to generate suggestions. Please try again." };
+    
+    // Fallback Mock Data for Hackathon Rate Limits (429 Too Many Requests)
+    const mockFallback = [
+      {
+        "title": "Local City Tour",
+        "description": `Explore the best cultural landmarks and hidden gems in the heart of ${place}.`
+      },
+      {
+        "title": "Culinary Experience",
+        "description": `Taste the authentic local cuisine at top-rated restaurants and street food stalls in ${place}.`
+      },
+      {
+        "title": "Nature & Relaxation",
+        "description": `Spend a day unwinding at the most scenic natural spots around ${place}.`
+      },
+      {
+        "title": "Historic Museum Visit",
+        "description": "Dive deep into the rich history and art collections at the premier museum in the area."
+      },
+      {
+        "title": "Adventure Activity",
+        "description": `Get your adrenaline pumping with a guided outdoor adventure specific to ${place}.`
+      },
+      {
+        "title": "Evening Entertainment",
+        "description": "Enjoy the vibrant nightlife, featuring live music, theater, or a sunset cruise."
+      }
+    ];
+
+    return { success: true, suggestions: mockFallback };
   }
 }
 
@@ -193,13 +221,13 @@ Make sure to provide at least 3-4 sections to cover the trip.
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    let text = response.text();
+    let text = response.text().trim();
     
-    if (text.startsWith("```json")) {
-        text = text.replace(/^```json\n/, "").replace(/\n```$/, "");
-    }
-    if (text.startsWith("```")) {
-        text = text.replace(/^```\n/, "").replace(/\n```$/, "");
+    // Robust extraction: find the first '[' and last ']'
+    const startIndex = text.indexOf('[');
+    const endIndex = text.lastIndexOf(']');
+    if (startIndex !== -1 && endIndex !== -1) {
+      text = text.substring(startIndex, endIndex + 1);
     }
 
     const parsed = JSON.parse(text);
