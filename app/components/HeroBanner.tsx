@@ -159,7 +159,7 @@ export default function HeroBanner({
                 textTransform: "uppercase" as const,
               }}
             >
-              <span>📍 {userCity ? `${userCity}, ` : ""}{userCountry || ""}</span>
+              <span>{userCity ? `${userCity}, ` : ""}{userCountry || ""}</span>
             </div>
           )}
         </div>

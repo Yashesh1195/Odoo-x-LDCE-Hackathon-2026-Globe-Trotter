@@ -54,17 +54,27 @@ export async function getCurrentUser() {
 }
 
 export async function logoutUser() {
-  const cookieStore = await cookies();
-  cookieStore.set("auth_token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
-    path: "/",
-  });
-  cookieStore.set("gt_user_id", "", {
-    maxAge: 0,
-    path: "/",
-  });
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("auth_token");
+    cookieStore.delete("gt_user_id");
+    cookieStore.set("auth_token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 0,
+      path: "/",
+      expires: new Date(0),
+    });
+    cookieStore.set("gt_user_id", "", {
+      maxAge: 0,
+      path: "/",
+      expires: new Date(0),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error logging out:", error);
+    return { success: false, error: "Logout failed" };
+  }
 }
 
 export async function registerUser(data: any) {

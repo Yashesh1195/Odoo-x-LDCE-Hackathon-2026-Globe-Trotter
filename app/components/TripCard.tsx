@@ -19,7 +19,7 @@ export default function TripCard({ trip, index }: TripCardProps) {
     { label: string; color: string; bg: string }
   > = {
     completed: {
-      label: "Completed ✓",
+      label: "Completed",
       color: "var(--success)",
       bg: "rgba(34,197,94,0.1)",
     },

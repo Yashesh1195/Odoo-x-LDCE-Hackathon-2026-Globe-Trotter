@@ -21,7 +21,7 @@ export default function ProfileTripCard({ trip, index, onView }: ProfileTripCard
       bg: "rgba(28,105,212,0.08)",
     },
     completed: {
-      label: "Completed ✓",
+      label: "Completed",
       color: "var(--success)",
       bg: "rgba(34,197,94,0.08)",
     },

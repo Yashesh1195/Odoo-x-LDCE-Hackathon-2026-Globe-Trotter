@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { getUserProfile, type UserProfileData } from "../actions/profile";
+import { logoutUser } from "../actions/auth";
 
 export interface TopNavUser {
   id?: string;
@@ -24,6 +25,7 @@ interface TopNavProps {
 export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [fetchedUser, setFetchedUser] = useState<UserProfileData | null>(null);
   const [localUser, setLocalUser] = useState<TopNavUser | null>(null);
 
@@ -101,22 +103,45 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
     return initials || "GT";
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
     try {
-      localStorage.removeItem("gt_user");
-      document.cookie = "gt_user_id=; path=/; max-age=0";
-      document.cookie = "auth_token=; path=/; max-age=0";
-    } catch (e) {
-      console.error("Logout error:", e);
+      // 1. Call server action to clear httpOnly cookies on the server
+      await logoutUser();
+    } catch (err) {
+      console.error("Server action logout error:", err);
     }
+
+    try {
+      // 2. Call API route as fallback
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      // ignore
+    }
+
+    try {
+      // 3. Clear client storage
+      localStorage.removeItem("gt_user");
+      sessionStorage.clear();
+      document.cookie = "gt_user_id=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+      document.cookie = "auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+    } catch (e) {
+      console.error("Client storage clear error:", e);
+    }
+
     setUserMenuOpen(false);
     setMobileMenuOpen(false);
-    router.push("/login");
+
+    // 4. Force full page refresh to /login to ensure clean state
+    window.location.href = "/login";
   };
 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Plan a Trip", href: "/trip/new" },
+    { label: "Calendar", href: "/calendar" },
     { label: "Search Activity", href: "/activity/search" },
     { label: "Community", href: "/community" },
     { label: "My Trips", href: "/trips" },
@@ -267,7 +292,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                       marginTop: 4,
                     }}
                   >
-                    📍 {activeUser.city}, {activeUser.country}
+                    {activeUser.city}, {activeUser.country}
                   </div>
                 )}
               </div>
@@ -316,9 +341,13 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                 <div className="border-t border-[var(--hairline)] my-1 pt-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full text-xs font-bold text-[#dc2626] hover:bg-red-50 hover:text-red-700 text-left px-2 py-2 uppercase tracking-wider cursor-pointer border-none bg-transparent transition-colors"
+                    disabled={isLoggingOut}
+                    className="w-full text-xs font-bold text-[#dc2626] hover:bg-red-50 hover:text-red-700 text-left px-2 py-2 uppercase tracking-wider cursor-pointer border-none bg-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
                   >
-                    Sign Out
+                    <span>{isLoggingOut ? "Signing Out..." : "Sign Out"}</span>
+                    {isLoggingOut && (
+                      <span className="animate-spin text-xs">⟳</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -401,9 +430,10 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full text-left py-3 text-sm font-bold text-[#dc2626] border-none bg-transparent cursor-pointer"
+            disabled={isLoggingOut}
+            className="w-full text-left py-3 text-sm font-bold text-[#dc2626] border-none bg-transparent cursor-pointer disabled:opacity-50"
           >
-            Sign Out
+            {isLoggingOut ? "Signing Out..." : "Sign Out"}
           </button>
         </div>
       )}
