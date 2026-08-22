@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Trip } from "@/app/lib/types";
 import { getLocationImage } from "@/app/lib/destinationImages";
-import Link from "next/link";
 
 interface TripCardProps {
   trip: Trip;
@@ -235,11 +234,7 @@ export default function TripCard({ trip, index }: TripCardProps) {
 
         {/* View Details Link */}
         <Link
-<<<<<<< HEAD
           href={`/trip/${trip.id}/itinerary`}
-=======
-          href={`/trip/${trip.id}`}
->>>>>>> 106c45a4aa35c9ca8f7d97697fece2c082f27136
           className="inline-flex items-center gap-1 no-underline hover:gap-2 transition-all"
           onClick={(e) => e.stopPropagation()}
           style={{
