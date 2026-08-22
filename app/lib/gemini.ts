@@ -133,10 +133,6 @@ Categorized checklist:
 - Prices in INR (₹)
 - Keep the tone professional, clean, and editorial — like a high-end travel magazine
 - Do NOT add any disclaimer about prices being estimates at the start or end`;
-<<<<<<< HEAD
-
-=======
->>>>>>> d9435441bd01badbbc2a3b3102917bf64cb6af47
 }
 
 // ── Streaming Generation with 2-Model Fallback ───────────────────────

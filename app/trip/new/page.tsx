@@ -288,10 +288,6 @@ export default function PlanTripPage() {
         {/* ── Top Navigation ── */}
         <TopNav />
 
-<<<<<<< HEAD
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 border-b border-black">
-          <div className="max-w-[1440px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-=======
         {/* ── Header Band ── */}
         <section
           id="plan-hero"
@@ -301,7 +297,6 @@ export default function PlanTripPage() {
           }}
         >
           <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
->>>>>>> d9435441bd01badbbc2a3b3102917bf64cb6af47
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[12px] font-bold uppercase tracking-[2px] text-[var(--primary-light)]">
