@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import type { Trip } from "@/app/lib/types";
+import { getLocationImage } from "@/app/lib/destinationImages";
 
 interface TripCardProps {
   trip: Trip;
@@ -11,6 +12,7 @@ interface TripCardProps {
 
 export default function TripCard({ trip, index }: TripCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const tripPhoto = trip.image?.startsWith("http") ? trip.image : getLocationImage(trip.destination || trip.name);
 
   const statusConfig: Record<
     string,
@@ -68,7 +70,7 @@ export default function TripCard({ trip, index }: TripCardProps) {
         }}
       >
         <Image
-          src={trip.image}
+          src={tripPhoto}
           alt={trip.name}
           fill
           className="object-cover transition-transform"

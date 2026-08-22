@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import type { DbTrip } from "@/app/components/TripOverviewCard";
+import { getLocationImage } from "@/app/lib/destinationImages";
 
 interface TripDetailModalProps {
   trip: DbTrip | null;
@@ -34,6 +35,8 @@ export default function TripDetailModal({
   }, [onClose]);
 
   if (!trip) return null;
+
+  const tripPhoto = getLocationImage(trip.place);
 
   const statusConfig = {
     ongoing: {
@@ -109,14 +112,22 @@ export default function TripDetailModal({
           overflowY: "auto",
         }}
       >
-        {/* ── Header ── */}
+        {/* ── Header with Location Photo ── */}
         <div
+          className="relative overflow-hidden"
           style={{
             backgroundColor: "var(--surface-dark)",
             padding: "32px 32px 28px",
-            position: "relative",
           }}
         >
+          {/* Ambient Location Photo Background */}
+          <div className="absolute inset-0 opacity-25 pointer-events-none">
+            <img
+              src={tripPhoto}
+              alt={trip.place}
+              className="w-full h-full object-cover"
+            />
+          </div>
           {/* Close button */}
           <button
             id="trip-detail-close"

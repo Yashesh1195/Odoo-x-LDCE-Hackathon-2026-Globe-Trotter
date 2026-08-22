@@ -40,11 +40,11 @@ Example:
     let text = response.text();
     
     // Clean markdown formatting if present
-    if (text.startsWith("\`\`\`json")) {
-        text = text.replace(/^\`\`\`json\n/, "").replace(/\n\`\`\`$/, "");
+    if (text.startsWith("```json")) {
+        text = text.replace(/^```json\n/, "").replace(/\n```$/, "");
     }
-    if (text.startsWith("\`\`\`")) {
-        text = text.replace(/^\`\`\`\n/, "").replace(/\n\`\`\`$/, "");
+    if (text.startsWith("```")) {
+        text = text.replace(/^```\n/, "").replace(/\n```$/, "");
     }
 
     const parsed = JSON.parse(text);
@@ -59,16 +59,21 @@ export async function createTrip(data: { place: string, startDate: string, endDa
   try {
     let finalUserId = data.userId;
     if (!finalUserId) {
-      let firstUser = await prisma.user.findFirst();
+      let firstUser = await prisma.user.findFirst({
+        where: { firstName: { not: "Guest" } },
+      });
+      if (!firstUser) {
+        firstUser = await prisma.user.findFirst();
+      }
       if (!firstUser) {
          firstUser = await prisma.user.create({
             data: {
-              firstName: "Guest",
-              lastName: "User",
-              email: `guest_${Date.now()}@example.com`,
-              phoneNumber: "1234567890",
-              city: "Unknown",
-              country: "Unknown",
+              firstName: "Priyanshu",
+              lastName: "Sharma",
+              email: "priyanshu@globetrotter.com",
+              phoneNumber: "+91 98765 43210",
+              city: "Ahmedabad",
+              country: "India",
               password: "dummy"
             }
          });
@@ -89,6 +94,66 @@ export async function createTrip(data: { place: string, startDate: string, endDa
   } catch (error) {
     console.error("Trip creation error:", error);
     return { error: "An error occurred while saving the trip." };
+  }
+}
+
+export async function getTripDetails(tripId: string) {
+  try {
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      include: {
+        itinerarySections: {
+          orderBy: { createdAt: "asc" },
+        },
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            photoUrl: true,
+          },
+        },
+      },
+    });
+
+    if (!trip) {
+      return { error: "Trip not found." };
+    }
+
+    // Parse suggestions JSON
+    let suggestions: { title: string; description: string }[] = [];
+    if (trip.suggestions) {
+      try {
+        suggestions = JSON.parse(trip.suggestions);
+      } catch {
+        suggestions = [];
+      }
+    }
+
+    // Calculate total budget from itinerary sections
+    let totalBudget = 0;
+    for (const section of trip.itinerarySections) {
+      const num = parseFloat(section.budget.replace(/[^0-9.]/g, ""));
+      if (!isNaN(num)) totalBudget += num;
+    }
+
+    return {
+      success: true,
+      trip: {
+        id: trip.id,
+        place: trip.place,
+        startDate: trip.startDate.toISOString(),
+        endDate: trip.endDate.toISOString(),
+        suggestions,
+        totalBudget,
+        sections: trip.itinerarySections,
+        user: trip.user,
+      },
+    };
+  } catch (error) {
+    console.error("Get trip details error:", error);
+    return { error: "Failed to fetch trip details." };
   }
 }
 
@@ -124,11 +189,11 @@ Make sure to provide at least 3-4 sections to cover the trip.
     const response = await result.response;
     let text = response.text();
     
-    if (text.startsWith("\`\`\`json")) {
-        text = text.replace(/^\`\`\`json\n/, "").replace(/\n\`\`\`$/, "");
+    if (text.startsWith("```json")) {
+        text = text.replace(/^```json\n/, "").replace(/\n```$/, "");
     }
-    if (text.startsWith("\`\`\`")) {
-        text = text.replace(/^\`\`\`\n/, "").replace(/\n\`\`\`$/, "");
+    if (text.startsWith("```")) {
+        text = text.replace(/^```\n/, "").replace(/\n```$/, "");
     }
 
     const parsed = JSON.parse(text);
