@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
+import { loginUser } from "../actions/auth";
+
 interface LoginScreenProps {
   onSuccess?: (username: string) => void;
   onNavigateToRegister?: () => void;
@@ -37,12 +39,12 @@ export default function LoginScreen({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
     if (!username.trim()) {
-      setErrorMessage("Please enter your username or BMW ID.");
+      setErrorMessage("Please enter your email/username.");
       return;
     }
 
@@ -53,14 +55,24 @@ export default function LoginScreen({
 
     setIsLoading(true);
 
-    // Simulate authentication delay
-    setTimeout(() => {
+    try {
+      const result = await loginUser({ username, password });
+
+      if (result.error) {
+        setErrorMessage(result.error);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
       setIsSuccess(true);
       if (onSuccess) {
-        onSuccess(username);
+        onSuccess(result.user?.firstName || username);
       }
-    }, 900);
+    } catch (err) {
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
