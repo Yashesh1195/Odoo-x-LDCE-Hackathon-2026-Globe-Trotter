@@ -50,7 +50,8 @@ export async function registerUser(data: any) {
       },
     });
 
-<<<<<<< HEAD
+    await setAuthCookie(newUser.id);
+
     return {
       success: true,
       user: {
@@ -64,11 +65,6 @@ export async function registerUser(data: any) {
         photoUrl: newUser.photoUrl,
       },
     };
-=======
-    await setAuthCookie(newUser.id);
-
-    return { success: true, user: { id: newUser.id, email: newUser.email, firstName: newUser.firstName } };
->>>>>>> 8613b333239a0958a9d4d57ca57f16f18daf9c53
   } catch (error) {
     console.error("Registration error:", error);
     return { error: "An error occurred during registration. Please try again." };
@@ -91,7 +87,8 @@ export async function loginUser(data: any) {
       return { error: "Invalid username or password." };
     }
 
-<<<<<<< HEAD
+    await setAuthCookie(user.id);
+
     return {
       success: true,
       user: {
@@ -105,11 +102,6 @@ export async function loginUser(data: any) {
         photoUrl: user.photoUrl,
       },
     };
-=======
-    await setAuthCookie(user.id);
-
-    return { success: true, user: { id: user.id, email: user.email, firstName: user.firstName } };
->>>>>>> 8613b333239a0958a9d4d57ca57f16f18daf9c53
   } catch (error) {
     console.error("Login error:", error);
     return { error: "An error occurred during login. Please try again." };
