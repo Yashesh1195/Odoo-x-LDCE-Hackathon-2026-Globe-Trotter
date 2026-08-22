@@ -140,14 +140,8 @@ export default function PlanTripPage() {
         {/* ── Top Navigation ── */}
         <TopNav />
 
-        {/* Hero Band */}
-<<<<<<< HEAD
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 px-6 sm:px-12 lg:px-20 border-b border-black">
-          <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-=======
         <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 border-b border-black">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
->>>>>>> 79174cde39e7a2176acd9e98904221892b22878a
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="inline-block w-2.5 h-2.5 bg-[var(--primary)]" />

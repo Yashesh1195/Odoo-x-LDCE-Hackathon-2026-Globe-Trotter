@@ -16,6 +16,7 @@ export async function proxy(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/upload') ||
     pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|js|map|txt|json)$/)
   ) {
     return NextResponse.next();
