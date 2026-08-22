@@ -2,17 +2,24 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function TopNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname() || "";
 
   const navLinks = [
-    { label: "Dashboard", href: "/dashboard", active: true },
+    { label: "Dashboard", href: "/dashboard" },
     { label: "Search Activity", href: "/activity/search" },
     { label: "My Trips", href: "/trips" },
-    { label: "Destinations", href: "/dashboard" },
-    { label: "Budget", href: "/dashboard" },
-  ];
+    { label: "Destinations", href: "/dashboard#destinations" },
+    { label: "Budget", href: "/dashboard#budget" },
+  ].map(link => ({
+    ...link,
+    active: link.href === "/dashboard" 
+      ? pathname === "/dashboard" 
+      : pathname.startsWith(link.href.split("#")[0])
+  }));
 
   return (
     <nav
