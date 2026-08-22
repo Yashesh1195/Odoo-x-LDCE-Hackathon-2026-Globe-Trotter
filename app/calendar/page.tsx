@@ -26,6 +26,34 @@ interface CalendarTrip {
 
 const DEFAULT_SAMPLE_TRIPS: CalendarTrip[] = [
   {
+    id: "trip-dubai-002",
+    name: "Dubai Desert Escape",
+    destination: "Dubai",
+    country: "United Arab Emirates",
+    startDate: "2026-08-18",
+    endDate: "2026-08-28",
+    status: "in-progress",
+    budgetTotal: 4200,
+    activities: [
+      {
+        id: "act-201",
+        time: "08:00 AM",
+        title: "Burj Khalifa 148th Floor Observation",
+        description: "Sky views over Dubai skyline and Arabian Gulf coastline.",
+        budget: "$140",
+        category: "Architecture",
+      },
+      {
+        id: "act-202",
+        time: "03:30 PM",
+        title: "4x4 Desert Dune Bashing & Camel Safari",
+        description: "Dune riding, sunset camel trek, and traditional Bedouin BBQ camp.",
+        budget: "$190",
+        category: "Adventure",
+      },
+    ],
+  },
+  {
     id: "trip-paris-001",
     name: "Parisian Autumn",
     destination: "Paris",
@@ -57,62 +85,6 @@ const DEFAULT_SAMPLE_TRIPS: CalendarTrip[] = [
         title: "Seine Sunset Dinner Cruise",
         description: "3-course Parisian culinary cruise along historical Seine landmarks.",
         budget: "$160",
-        category: "Dining",
-      },
-    ],
-  },
-  {
-    id: "trip-dubai-002",
-    name: "Dubai Desert Escape",
-    destination: "Dubai",
-    country: "United Arab Emirates",
-    startDate: "2026-08-18",
-    endDate: "2026-08-28",
-    status: "in-progress",
-    budgetTotal: 4200,
-    activities: [
-      {
-        id: "act-201",
-        time: "08:00 AM",
-        title: "Burj Khalifa 148th Floor Observation",
-        description: "Sky views over Dubai skyline and Arabian Gulf coastline.",
-        budget: "$140",
-        category: "Architecture",
-      },
-      {
-        id: "act-202",
-        time: "03:30 PM",
-        title: "4x4 Desert Dune Bashing & Camel Safari",
-        description: "Dune riding, sunset camel trek, and traditional Bedouin BBQ camp.",
-        budget: "$190",
-        category: "Adventure",
-      },
-    ],
-  },
-  {
-    id: "trip-swiss-003",
-    name: "Swiss Alps Adventure",
-    destination: "Zermatt & Lucerne",
-    country: "Switzerland",
-    startDate: "2026-06-10",
-    endDate: "2026-06-18",
-    status: "completed",
-    budgetTotal: 3500,
-    activities: [
-      {
-        id: "act-301",
-        time: "09:30 AM",
-        title: "Gornergrat Cogwheel Railway to Matterhorn",
-        description: "Scenic mountain train ride facing 29 mountain peaks over 4,000m.",
-        budget: "$110",
-        category: "Nature",
-      },
-      {
-        id: "act-302",
-        time: "02:00 PM",
-        title: "Traditional Swiss Cheese Fondue & Wine",
-        description: "Authentic fondue tasting in Zermatt alpine village.",
-        budget: "$75",
         category: "Dining",
       },
     ],
@@ -174,6 +146,34 @@ const DEFAULT_SAMPLE_TRIPS: CalendarTrip[] = [
     ],
   },
   {
+    id: "trip-swiss-003",
+    name: "Swiss Alps Adventure",
+    destination: "Zermatt & Lucerne",
+    country: "Switzerland",
+    startDate: "2026-06-10",
+    endDate: "2026-06-18",
+    status: "completed",
+    budgetTotal: 3500,
+    activities: [
+      {
+        id: "act-301",
+        time: "09:30 AM",
+        title: "Gornergrat Cogwheel Railway to Matterhorn",
+        description: "Scenic mountain train ride facing 29 mountain peaks over 4,000m.",
+        budget: "$110",
+        category: "Nature",
+      },
+      {
+        id: "act-302",
+        time: "02:00 PM",
+        title: "Traditional Swiss Cheese Fondue & Wine",
+        description: "Authentic fondue tasting in Zermatt alpine village.",
+        budget: "$75",
+        category: "Dining",
+      },
+    ],
+  },
+  {
     id: "trip-santorini-006",
     name: "Santorini Sunset Odyssey",
     destination: "Santorini",
@@ -214,7 +214,7 @@ const MONTH_NAMES = [
 export default function TripCalendarPage() {
   // Calendar View Date State
   const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(7); // August (0-indexed: 7)
+  const [currentMonth, setCurrentMonth] = useState(7); // August (0-indexed)
 
   // Filter & Search Controls matching Wireframe Screen 11
   const [searchQuery, setSearchQuery] = useState("");
@@ -321,6 +321,23 @@ export default function TripCalendarPage() {
     return result;
   }, [trips, searchQuery, filterStatus, sortOption]);
 
+  // Trip Summary Metrics
+  const summaryMetrics = useMemo(() => {
+    const totalTrips = filteredTrips.length;
+    const totalBudget = filteredTrips.reduce((acc, t) => acc + t.budgetTotal, 0);
+    const upcoming = filteredTrips.filter((t) => t.status === "upcoming").length;
+    const inProgress = filteredTrips.filter((t) => t.status === "in-progress").length;
+    const completed = filteredTrips.filter((t) => t.status === "completed").length;
+
+    return {
+      totalTrips,
+      totalBudgetFormatted: `$${totalBudget.toLocaleString()}`,
+      upcoming,
+      inProgress,
+      completed,
+    };
+  }, [filteredTrips]);
+
   // Calendar Math Helpers
   const daysInMonth = useMemo(() => {
     return new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -415,7 +432,6 @@ export default function TripCalendarPage() {
     if (!selectedTrip || !newActivityTitle.trim()) return;
 
     if (editingActivity) {
-      // Edit existing activity
       setTrips((prevTrips) =>
         prevTrips.map((t) => {
           if (t.id !== selectedTrip.id) return t;
@@ -437,7 +453,6 @@ export default function TripCalendarPage() {
         })
       );
     } else {
-      // Add new activity
       const newAct: CalendarActivity = {
         id: `act-custom-${Date.now()}`,
         time: newActivityTime,
@@ -500,10 +515,10 @@ export default function TripCalendarPage() {
         id="calendar-hero"
         style={{
           backgroundColor: "var(--surface-dark)",
-          padding: "48px 24px 36px",
+          padding: "48px 0 36px",
         }}
       >
-        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span
@@ -576,8 +591,8 @@ export default function TripCalendarPage() {
       {/* ── Search & Filter Controls Toolbar (Matching Screen 11 Wireframe) ── */}
       <div
         id="calendar-toolbar"
-        className="max-w-[1440px] mx-auto"
-        style={{ padding: "24px 24px 0" }}
+        className="max-w-[1440px] mx-auto px-6 lg:px-10"
+        style={{ paddingTop: 24 }}
       >
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
           {/* 1. Search Bar */}
@@ -648,6 +663,32 @@ export default function TripCalendarPage() {
             </div>
           </div>
         </div>
+
+        {/* ── Metric Summary Bar ── */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mt-6 p-4 bg-[var(--surface-soft)] border border-[var(--hairline)] text-xs">
+          <div className="flex items-center gap-6">
+            <div>
+              <span className="font-bold text-[var(--muted)] uppercase tracking-wider">Total Scheduled Trips: </span>
+              <span className="font-bold text-[var(--ink)] text-sm">{summaryMetrics.totalTrips}</span>
+            </div>
+            <div>
+              <span className="font-bold text-[var(--muted)] uppercase tracking-wider">Total Planned Budget: </span>
+              <span className="font-bold text-[var(--ink)] text-sm">{summaryMetrics.totalBudgetFormatted}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="px-2 py-1 bg-[#1c69d4]/10 text-[#1c69d4] font-bold border border-[#1c69d4]/30">
+              {summaryMetrics.upcoming} Upcoming
+            </span>
+            <span className="px-2 py-1 bg-[#d97706]/10 text-[#d97706] font-bold border border-[#d97706]/30">
+              {summaryMetrics.inProgress} In Progress
+            </span>
+            <span className="px-2 py-1 bg-[#16a34a]/10 text-[#16a34a] font-bold border border-[#16a34a]/30">
+              {summaryMetrics.completed} Completed
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* ── Main View Content (Calendar or Timeline) ── */}
@@ -671,7 +712,7 @@ export default function TripCalendarPage() {
                 </h2>
                 <button
                   onClick={resetToToday}
-                  className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider border border-[var(--hairline-strong)] text-[var(--primary)] hover:bg-[#1c69d4]/10 transition-colors"
+                  className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider border border-[var(--hairline-strong)] text-[var(--primary)] hover:bg-[#1c69d4]/10 transition-colors cursor-pointer"
                 >
                   Today
                 </button>

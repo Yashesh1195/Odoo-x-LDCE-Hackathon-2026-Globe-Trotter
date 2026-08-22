@@ -167,13 +167,6 @@ export default function ProfilePage() {
         {/* ── Top Navigation ── */}
         <TopNav />
 
-        {/* ── M Tricolor Stripe ── */}
-        <div className="m-stripe">
-          <div className="m-stripe-segment-1" />
-          <div className="m-stripe-segment-2" />
-          <div className="m-stripe-segment-3" />
-        </div>
-
         {/* ── Profile Hero Section (Avatar + User Details with Inline Edit) ── */}
         {user && <ProfileHero user={user} onSave={handleSaveProfile} />}
 

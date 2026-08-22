@@ -267,13 +267,8 @@ export default function BuildItineraryPage({
   return (
     <div className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--ink)] flex flex-col justify-between selection:bg-[var(--primary)] selection:text-white">
       <div>
-        {/* ── Top Navigation & Signature M Stripe ── */}
+        {/* ── Top Navigation ── */}
         <TopNav />
-        <div className="m-stripe">
-          <div className="m-stripe-segment-1" />
-          <div className="m-stripe-segment-2" />
-          <div className="m-stripe-segment-3" />
-        </div>
 
         {/* ── Rich Hero Band with Authentic Location Image ── */}
         <div className="relative bg-[var(--surface-dark)] text-[var(--on-dark)] overflow-hidden">
@@ -286,7 +281,7 @@ export default function BuildItineraryPage({
             />
           </div>
 
-          <div className="relative max-w-[1440px] mx-auto px-6 sm:px-12 lg:px-20 py-16 sm:py-20 z-10">
+          <div className="relative max-w-[1440px] mx-auto px-6 lg:px-10 py-16 sm:py-20 z-10">
             {/* Breadcrumb / Back Link */}
             <div className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-[1.5px] text-[var(--on-dark-soft)]">
               <Link href="/trips" className="hover:text-white transition-colors no-underline text-[var(--on-dark-soft)]">
@@ -332,7 +327,7 @@ export default function BuildItineraryPage({
         </div>
 
         {/* ── Main Content Area ── */}
-        <main className="max-w-[1440px] mx-auto px-6 sm:px-12 lg:px-20 py-12 sm:py-16">
+        <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-12 sm:py-16">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-4"></div>

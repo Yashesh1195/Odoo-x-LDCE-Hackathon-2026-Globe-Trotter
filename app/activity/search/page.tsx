@@ -163,11 +163,11 @@ export default function SearchActivityPage() {
       <TopNav />
 
       {/* Hero Band */}
-      <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-[60px] px-8 md:px-16 lg:px-32 border-b-4 border-[var(--primary)] relative overflow-hidden">
+      <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-[60px] px-6 lg:px-10 border-b-4 border-[var(--primary)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 pointer-events-none flex items-center justify-end overflow-hidden">
             <span className="text-[250px] font-bold leading-none select-none tracking-tighter">GT</span>
         </div>
-        <div className="max-w-[1000px] mx-auto relative z-10">
+        <div className="max-w-[1440px] mx-auto relative z-10">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-2 h-2 bg-[var(--primary)]"></span>
             <span className="text-[12px] font-bold uppercase tracking-[2px] text-[var(--primary)]">Global Discoveries</span>
@@ -207,7 +207,7 @@ export default function SearchActivityPage() {
       </div>
 
       {/* Results Section */}
-      <main className="max-w-[1000px] mx-auto px-8 md:px-16 lg:px-32 py-[60px]">
+      <main className="max-w-[1440px] mx-auto px-6 lg:px-10 py-[60px]">
         
         {hasSearched && !loading && !error && (
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 border-b border-[var(--hairline-strong)] pb-4 gap-4">

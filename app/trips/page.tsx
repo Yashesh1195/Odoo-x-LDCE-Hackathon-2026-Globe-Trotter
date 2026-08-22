@@ -310,10 +310,10 @@ export default function TripsListingPage() {
         id="trips-hero"
         style={{
           backgroundColor: "var(--surface-dark)",
-          padding: "48px 24px 40px",
+          padding: "48px 0 40px",
         }}
       >
-        <div className="max-w-[1440px] mx-auto">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
           <p
             style={{
               fontSize: 13,
@@ -355,8 +355,8 @@ export default function TripsListingPage() {
       {/* ── Search & Filter Bar ── */}
       <div
         ref={dropdownRef}
-        className="max-w-[1440px] mx-auto"
-        style={{ padding: "24px 24px 0" }}
+        className="max-w-[1440px] mx-auto px-6 lg:px-10"
+        style={{ paddingTop: 24 }}
       >
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {/* Search Input */}

@@ -14,7 +14,7 @@ interface HeroBannerProps {
 }
 
 const CAROUSEL_IMAGES = [
-  { url: "/images/hero-banner.jpg", label: "Coastal Highway" },
+  { url: "/images/hero-banner.jpg", label: "Alpine Coastal Highway" },
   { url: "/images/dest-paris.jpg", label: "Paris, France" },
   { url: "/images/dest-tokyo.jpg", label: "Tokyo, Japan" },
   { url: "/images/dest-santorini.jpg", label: "Santorini, Greece" },

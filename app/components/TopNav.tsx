@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { getUserProfile, type UserProfileData } from "../actions/profile";
@@ -53,10 +53,8 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
       }
     }
 
-    if (!propUser) {
-      loadUser();
-    }
-  }, [propUser]);
+    loadUser();
+  }, []);
 
   // Close menus when route changes
   useEffect(() => {
@@ -80,7 +78,20 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
     };
   }, [userMenuOpen]);
 
-  const activeUser: TopNavUser | null = propUser || fetchedUser || localUser;
+  const activeUser: TopNavUser | null = useMemo(() => {
+    if (!propUser && !fetchedUser && !localUser) return null;
+    return {
+      ...localUser,
+      ...fetchedUser,
+      ...propUser,
+      photoUrl: propUser?.photoUrl || fetchedUser?.photoUrl || localUser?.photoUrl,
+      firstName: propUser?.firstName || fetchedUser?.firstName || localUser?.firstName,
+      lastName: propUser?.lastName || fetchedUser?.lastName || localUser?.lastName,
+      email: propUser?.email || fetchedUser?.email || localUser?.email,
+      city: propUser?.city || (fetchedUser as any)?.city || localUser?.city,
+      country: propUser?.country || (fetchedUser as any)?.country || localUser?.country,
+    };
+  }, [propUser, fetchedUser, localUser]);
 
   const getInitials = () => {
     if (!activeUser) return "GT";
@@ -295,6 +306,14 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                   className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
                 >
                   <span>Plan a New Trip</span>
+                  <span>›</span>
+                </Link>
+                <Link
+                  href="/calendar"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
+                >
+                  <span>Trip Calendar</span>
                   <span>›</span>
                 </Link>
                 <Link

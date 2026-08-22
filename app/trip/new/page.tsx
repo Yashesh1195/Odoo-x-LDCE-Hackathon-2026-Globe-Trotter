@@ -64,16 +64,11 @@ export default function PlanTripPage() {
   return (
     <div className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--ink)] flex flex-col justify-between selection:bg-[var(--primary)] selection:text-white">
       <div>
-        {/* ── Top Navigation & Signature M Stripe ── */}
+        {/* ── Top Navigation ── */}
         <TopNav />
-        <div className="m-stripe">
-          <div className="m-stripe-segment-1" />
-          <div className="m-stripe-segment-2" />
-          <div className="m-stripe-segment-3" />
-        </div>
 
         {/* Hero Band */}
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-16 sm:py-20 px-6 sm:px-12 lg:px-20">
+        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-16 sm:py-20 px-6 lg:px-10">
           <div className="max-w-[1440px] mx-auto">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-white">
               Plan a New Trip
@@ -85,7 +80,7 @@ export default function PlanTripPage() {
         </div>
 
         {/* Form Section */}
-        <div className="px-6 sm:px-12 lg:px-20 py-12 border-b border-[var(--hairline)]">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-12 border-b border-[var(--hairline)]">
           <form onSubmit={handleGenerate} className="max-w-xl mx-auto space-y-6">
             {error && (
               <div className="text-[var(--error)] text-sm font-bold p-4 bg-red-50 border border-[var(--error)] animate-fadeIn">
@@ -94,7 +89,7 @@ export default function PlanTripPage() {
             )}
             {successMsg && (
               <div className="text-[var(--success)] text-sm font-bold p-4 bg-green-50 border border-[var(--success)] animate-fadeIn">
-                ✓ {successMsg}
+                {successMsg}
               </div>
             )}
             
