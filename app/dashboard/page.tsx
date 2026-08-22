@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import TopNav from "@/app/components/TopNav";
 import HeroBanner from "@/app/components/HeroBanner";
 import SearchFilterBar from "@/app/components/SearchFilterBar";
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   // ── Chatbot & Add Team Route Modals ──
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isAddRouteOpen, setIsAddRouteOpen] = useState(false);
+  const router = useRouter();
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -368,7 +370,7 @@ export default function DashboardPage() {
               fontWeight: 700,
               letterSpacing: "0.5px",
             }}
-            onClick={() => setIsAddRouteOpen(true)}
+            onClick={() => router.push("/trip/new")}
           >
             <svg
               style={{ width: 16, height: 16 }}

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { registerUser } from "../actions/auth";
 
@@ -33,6 +34,7 @@ export default function RegisterScreen({
   const [isSuccess, setIsSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -146,6 +148,8 @@ export default function RegisterScreen({
       setIsSuccess(true);
       if (onSuccess) {
         onSuccess(result.user);
+      } else {
+        setTimeout(() => router.push("/login"), 1500);
       }
     } catch (err) {
       setErrorMessage("An unexpected error occurred. Please try again.");

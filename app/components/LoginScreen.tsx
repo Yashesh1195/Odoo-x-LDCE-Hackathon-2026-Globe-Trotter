@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { loginUser } from "../actions/auth";
 
@@ -22,6 +23,7 @@ export default function LoginScreen({
   const [errorMessage, setErrorMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const router = useRouter();
 
   // Sample avatar presets
   const defaultAvatars = [
@@ -68,6 +70,8 @@ export default function LoginScreen({
       setIsSuccess(true);
       if (onSuccess) {
         onSuccess(result.user?.firstName || username);
+      } else {
+        setTimeout(() => router.push("/dashboard"), 1000);
       }
     } catch (err) {
       setErrorMessage("An unexpected error occurred. Please try again.");
