@@ -77,7 +77,6 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
         {saveSuccess && (
           <div className="mb-6 p-4 bg-[#f0fdf4] border border-[var(--success)] text-[#166534] flex items-center justify-between text-sm animate-fadeIn">
             <div className="flex items-center gap-2">
-              <span className="font-bold">✓</span>
               <span>Profile information updated successfully.</span>
             </div>
             <button

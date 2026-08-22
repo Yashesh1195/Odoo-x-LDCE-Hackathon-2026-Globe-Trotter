@@ -141,6 +141,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const navLinks = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Plan a Trip", href: "/trip/new" },
+    { label: "Calendar", href: "/calendar" },
     { label: "Search Activity", href: "/activity/search" },
     { label: "My Trips", href: "/trips" },
   ].map((link) => {
@@ -290,7 +291,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                       marginTop: 4,
                     }}
                   >
-                    📍 {activeUser.city}, {activeUser.country}
+                    {activeUser.city}, {activeUser.country}
                   </div>
                 )}
               </div>
