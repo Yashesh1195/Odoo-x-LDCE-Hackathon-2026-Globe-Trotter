@@ -13,7 +13,7 @@ export async function searchActivity(
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
     const locationContext = userLocation 
       ? `The user is currently located in ${userLocation.city}, ${userLocation.country}.` 
@@ -43,16 +43,29 @@ export async function searchActivity(
     Provide exactly 5-6 highly curated recommendations.
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    let text = "";
+    for (const mName of models) {
+      try {
+        const model = genAI.getGenerativeModel({ model: mName });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        text = response.text().trim();
+        if (text) break;
+      } catch (err) {
+        console.warn(`[Activity Search] Model ${mName} failed, trying fallback...`);
+      }
+    }
+
+    if (!text) {
+      throw new Error("All Gemini models failed for activity search.");
+    }
     
     // Clean markdown formatting if present
-    if (text.startsWith("\`\`\`json")) {
-        text = text.replace(/^\`\`\`json\n/, "").replace(/\n\`\`\`$/, "");
+    if (text.startsWith("```json")) {
+        text = text.replace(/^```json\n/, "").replace(/\n```$/, "");
     }
-    if (text.startsWith("\`\`\`")) {
-        text = text.replace(/^\`\`\`\n/, "").replace(/\n\`\`\`$/, "");
+    if (text.startsWith("```")) {
+        text = text.replace(/^```\n/, "").replace(/\n```$/, "");
     }
 
     const parsed = JSON.parse(text);

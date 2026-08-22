@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import TopNav from "../../components/TopNav";
 import { useRouter } from "next/navigation";
-import { generateChatTripPlan, saveChatTrip, ChatItineraryPlanResult } from "../../actions/trip";
+import TopNav from "@/app/components/TopNav";
+import { saveChatTrip } from "@/app/actions/trip";
 import { getLocationImage } from "@/app/lib/destinationImages";
 
 interface ChatMessage {
@@ -11,80 +11,111 @@ interface ChatMessage {
   sender: "user" | "ai";
   text: string;
   timestamp: string;
-  plan?: ChatItineraryPlanResult;
+}
+
+interface ItinerarySection {
+  title: string;
+  description: string;
+  dateRange: string;
+  budget: string;
+}
+
+interface GeneratedPlan {
+  destination: string;
+  startDate: string;
+  endDate: string;
+  totalBudget: string;
+  summary: string;
+  sections: ItinerarySection[];
 }
 
 const QUICK_PROMPTS = [
-  { label: "Shimla Snow Trek", prompt: "Plan a 5-day winter snow trip to Shimla with scenic mountain viewpoints, Kufri snow trek, and cozy stays under ₹20,000." },
-  { label: "Gujarat Heritage & Safari", prompt: "Plan a 6-day trip to Gujarat exploring the White Rann of Kutch, Statue of Unity, and Gir Asiatic Lion safari." },
-  { label: "Royal Rajasthan", prompt: "Plan a 4-day royal heritage trip to Jaipur and Udaipur with palaces, forts, and traditional Rajasthani cuisine." },
-  { label: "Kerala Backwaters", prompt: "Plan a 5-day relaxing vacation in Kerala with Alleppey houseboat stay and Munnar tea hills exploration." },
-  { label: "Parisian Highlights", prompt: "Plan a 4-day trip to Paris for 2 people with museum tours, Eiffel Tower visit, and Seine river cruise." },
+  { label: "Manali & Solang 5-Day Winter Trip", prompt: "Plan a 5-day winter trip to Manali with Solang Valley snow adventure and Atal Tunnel under ₹25,000." },
+  { label: "Paris 4-Day Romantic Getaway", prompt: "Plan a 4-day romantic itinerary for Paris covering Eiffel Tower, Louvre, and Seine cruise." },
+  { label: "Tokyo 7-Day Tech & Culture", prompt: "Create a 7-day Tokyo trip with Akihabara, Shibuya, Senso-ji temple, and Fuji day trip." },
+  { label: "Dubai 5-Day Desert & Luxury", prompt: "Curate a 5-day luxury Dubai itinerary with dune bashing, Burj Khalifa, and marina dining." },
 ];
 
 export default function PlanTripPage() {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: "welcome-1",
+      id: "msg-welcome",
       sender: "ai",
-      text: "Hello! I am your GlobeTrotter AI Concierge. Where would you like to travel next? Tell me your dream destination, dates, budget, or preferred activities, or click any suggestion below to start planning.",
-      timestamp: "Just now",
+      text: "Hello! I am your GlobeTrotter AI Travel Assistant. Where would you like to travel next? Share your destination, preferred dates, or travel style!",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState<ChatItineraryPlanResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<GeneratedPlan | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSendMessage = async (promptToSend?: string) => {
-    const text = promptToSend || inputText.trim();
-    if (!text || loading) return;
+  const handleSendMessage = async (customPrompt?: string) => {
+    const textToSend = customPrompt || inputText;
+    if (!textToSend.trim() || loading) return;
 
     const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: `msg-user-${Date.now()}`,
       sender: "user",
-      text,
+      text: textToSend.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInputText("");
+    if (!customPrompt) setInputText("");
     setLoading(true);
     setErrorMsg("");
 
     try {
-      const res = await generateChatTripPlan(text);
-      if (res.success && res.plan) {
-        setCurrentPlan(res.plan);
-        const aiMsg: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          sender: "ai",
-          text: `I have created a comprehensive step-by-step itinerary for your trip to **${res.plan.destination}**! Review the day-by-day schedule on the right pane. You can adjust details by typing below or click 'Save & Open Itinerary' to start customizing.`,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          plan: res.plan,
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-      } else {
-        const errorReply: ChatMessage = {
-          id: `ai-err-${Date.now()}`,
-          sender: "ai",
-          text: "I encountered an issue generating the plan. Please try rephrasing your destination or dates.",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        };
-        setMessages((prev) => [...prev, errorReply]);
+      const res = await fetch("/api/plan-trip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: textToSend.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setErrorMsg(data.error || "Failed to generate itinerary response.");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `msg-ai-${Date.now()}`,
+            sender: "ai",
+            text: "I encountered an error generating your plan. Please try rephrasing your destination or dates.",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setLoading(false);
+        return;
       }
-    } catch (err: any) {
+
+      if (data.plan) {
+        setCurrentPlan(data.plan);
+        const aiMsgText = `I have generated your custom itinerary for **${data.plan.destination}** (${data.plan.startDate} to ${data.plan.endDate}) with an estimated budget of **${data.plan.totalBudget}**!\n\n${data.plan.summary}\n\nYou can review the day-by-day schedule on the right pane and save it directly to your trips.`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `msg-ai-${Date.now()}`,
+            sender: "ai",
+            text: aiMsgText,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+      }
+    } catch (err) {
       console.error(err);
-      setErrorMsg("Failed to connect to AI Planner. Please try again.");
+      setErrorMsg("Failed to connect to AI server.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSaveAndOpen = async () => {
-    if (!currentPlan || saving) return;
+    if (!currentPlan) return;
     setSaving(true);
     setErrorMsg("");
 
@@ -110,47 +141,8 @@ export default function PlanTripPage() {
         <TopNav />
 
         {/* Hero Band */}
-<<<<<<< HEAD
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-16 sm:py-20 px-6 lg:px-10">
-          <div className="max-w-[1440px] mx-auto">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-white">
-              Plan a New Trip
-            </h1>
-            <p className="text-lg sm:text-xl font-light text-[var(--on-dark-soft)] max-w-2xl">
-              Enter your destination and dates, and let our AI curate authentic experiences and itineraries for your journey.
-            </p>
-          </div>
-        </div>
-
-        {/* Form Section */}
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-12 border-b border-[var(--hairline)]">
-          <form onSubmit={handleGenerate} className="max-w-xl mx-auto space-y-6">
-            {error && (
-              <div className="text-[var(--error)] text-sm font-bold p-4 bg-red-50 border border-[var(--error)] animate-fadeIn">
-                {error}
-              </div>
-            )}
-            {successMsg && (
-              <div className="text-[var(--success)] text-sm font-bold p-4 bg-green-50 border border-[var(--success)] animate-fadeIn">
-                {successMsg}
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold uppercase tracking-[1.5px] text-[var(--ink)]">
-                Destination City / Country:
-              </label>
-              <input 
-                type="text" 
-                required
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                placeholder="e.g. Paris, Tokyo, Bali, New York, Manali"
-                className="bmw-input bg-[var(--canvas)] text-[var(--ink)] h-12 px-4 rounded-none border border-[var(--hairline-strong)] text-base w-full focus:outline-none focus:border-[var(--ink)]"
-              />
-=======
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 px-6 sm:px-12 lg:px-20 border-b border-black">
-          <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 border-b border-black">
+          <div className="max-w-[1440px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="inline-block w-2.5 h-2.5 bg-[var(--primary)]" />
@@ -166,7 +158,7 @@ export default function PlanTripPage() {
               </p>
             </div>
 
-            {/* Quick stats / model indicator */}
+            {/* Engine indicator */}
             <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-4 self-start md:self-auto">
               <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
               <div>
@@ -182,11 +174,10 @@ export default function PlanTripPage() {
         </div>
 
         {/* Main Content: Dual Pane Workspace */}
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8">
           {errorMsg && (
             <div className="mb-6 p-4 bg-red-50 border border-[var(--error)] text-[var(--error)] text-sm font-bold animate-fadeIn">
               {errorMsg}
->>>>>>> 0e1d2db8bc2ff38d1f31f055f8afee49461500d9
             </div>
           )}
 
@@ -224,7 +215,7 @@ export default function PlanTripPage() {
                     type="button"
                     onClick={() => handleSendMessage(qp.prompt)}
                     disabled={loading}
-                    className="text-xs font-bold px-3 py-1.5 bg-white hover:bg-[var(--primary)] hover:text-white transition-colors border border-[var(--hairline)] text-[var(--ink)] disabled:opacity-50"
+                    className="text-xs font-bold px-3 py-1.5 bg-white hover:bg-[var(--primary)] hover:text-white transition-colors border border-[var(--hairline)] text-[var(--ink)] disabled:opacity-50 cursor-pointer"
                   >
                     {qp.label}
                   </button>
