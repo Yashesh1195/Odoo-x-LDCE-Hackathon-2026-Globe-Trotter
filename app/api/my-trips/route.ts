@@ -1,5 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
+import { jwtVerify } from "jose";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "fallback_secret_for_hackathon"
+);
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -8,8 +13,19 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get("sort") ?? "date";
   const order = searchParams.get("order") ?? "asc";
 
+  const token = request.cookies.get("auth_token")?.value;
+  let tokenUserId: string | null = null;
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      tokenUserId = (payload?.userId as string) || null;
+    } catch {}
+  }
+  const reqUserId = tokenUserId || searchParams.get("userId") || request.cookies.get("gt_user_id")?.value;
+
   try {
     const trips = await prisma.trip.findMany({
+      where: reqUserId && !reqUserId.startsWith("demo-") ? { userId: reqUserId } : undefined,
       include: {
         itinerarySections: true,
         user: {

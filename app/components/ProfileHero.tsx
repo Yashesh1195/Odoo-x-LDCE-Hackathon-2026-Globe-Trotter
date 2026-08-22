@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import type { UserProfileData } from "../actions/profile";
+import { logoutUser } from "../actions/auth";
 
 interface ProfileHeroProps {
   user: UserProfileData;
@@ -199,27 +200,64 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
                     </h1>
                   </div>
 
-                  {/* Primary EDIT PROFILE CTA */}
-                  <button
-                    id="edit-profile-btn"
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="bmw-button-primary cursor-pointer flex items-center justify-center gap-2 self-start sm:self-auto"
-                    style={{
-                      height: 44,
-                      padding: "0 24px",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      letterSpacing: "1px",
-                      textTransform: "uppercase",
-                      border: "none",
-                    }}
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                    </svg>
-                    <span>Edit Profile</span>
-                  </button>
+                  {/* Profile Actions: Edit Profile & Sign Out */}
+                  <div className="flex items-center gap-3 self-start sm:self-auto">
+                    <button
+                      id="edit-profile-btn"
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className="bmw-button-primary cursor-pointer flex items-center justify-center gap-2"
+                      style={{
+                        height: 44,
+                        padding: "0 24px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        border: "none",
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                      <span>Edit Profile</span>
+                    </button>
+
+                    <button
+                      id="profile-signout-btn"
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await logoutUser();
+                        } catch {}
+                        try {
+                          await fetch("/api/auth/logout", { method: "POST" });
+                        } catch {}
+                        try {
+                          localStorage.removeItem("gt_user");
+                          sessionStorage.clear();
+                          document.cookie = "gt_user_id=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+                          document.cookie = "auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+                        } catch {}
+                        window.location.href = "/login";
+                      }}
+                      className="cursor-pointer flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-700 transition-colors"
+                      style={{
+                        height: 44,
+                        padding: "0 18px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        border: "1px solid var(--hairline-strong)",
+                        backgroundColor: "transparent",
+                        color: "var(--error)",
+                      }}
+                      title="Sign Out of GlobeTrotter"
+                    >
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Details Grid: 2 columns */}

@@ -1,6 +1,12 @@
 "use server";
 
 import { prisma } from "../lib/db";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "fallback_secret_for_hackathon"
+);
 
 export interface UserProfileData {
   id: string;
@@ -18,19 +24,41 @@ export interface UserProfileData {
 
 export async function getUserProfile(userId?: string) {
   try {
+    let targetUserId = userId;
+
+    // If userId not explicitly provided, read authenticated userId from JWT cookie
+    if (!targetUserId) {
+      try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get("auth_token")?.value;
+        if (token) {
+          const { payload } = await jwtVerify(token, JWT_SECRET);
+          if (payload?.userId) {
+            targetUserId = payload.userId as string;
+          }
+        }
+        if (!targetUserId) {
+          targetUserId = cookieStore.get("gt_user_id")?.value;
+        }
+      } catch (cookieErr) {
+        console.warn("Could not read auth cookies in getUserProfile:", cookieErr);
+      }
+    }
+
     let user = null;
 
-    if (userId && !userId.startsWith("demo-")) {
+    // Fetch user by authenticated user ID
+    if (targetUserId && !targetUserId.startsWith("demo-")) {
       user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: targetUserId },
         include: {
           trips: true,
         },
       });
     }
 
-    if (!user) {
-      // Find the first registered real user (excluding auto-generated guest users)
+    // Only fallback if no authenticated user could be found from cookie
+    if (!user && !targetUserId) {
       user = await prisma.user.findFirst({
         where: {
           firstName: { not: "Guest" },
@@ -53,18 +81,22 @@ export async function getUserProfile(userId?: string) {
         phoneNumber: user.phoneNumber || "+91 98765 43210",
         city: user.city || "Ahmedabad",
         country: user.country || "India",
-        additionalInfo: user.additionalInfo || "Passionate globetrotter exploring architectural wonders, mountain landscapes, and cultural heritage around the globe.",
-        photoUrl: user.photoUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+        additionalInfo:
+          user.additionalInfo ||
+          "Passionate globetrotter exploring architectural wonders, mountain landscapes, and cultural heritage around the globe.",
+        photoUrl:
+          user.photoUrl ||
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
         memberSince: new Date(user.createdAt).toLocaleDateString("en-US", {
           month: "long",
           year: "numeric",
         }),
-        tripsCount: user.trips?.length || 6,
+        tripsCount: user.trips?.length || 0,
       };
       return { success: true, user: userProfile };
     }
 
-    // Default primary profile
+    // Default primary profile fallback
     const defaultProfile: UserProfileData = {
       id: "demo-user-001",
       firstName: "Priyanshu",
@@ -73,8 +105,10 @@ export async function getUserProfile(userId?: string) {
       phoneNumber: "+91 98765 43210",
       city: "Ahmedabad",
       country: "India",
-      additionalInfo: "Passionate globetrotter exploring architectural wonders, mountain landscapes, and cultural heritage around the globe.",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+      additionalInfo:
+        "Passionate globetrotter exploring architectural wonders, mountain landscapes, and cultural heritage around the globe.",
+      photoUrl:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
       memberSince: "March 2024",
       tripsCount: 6,
     };
@@ -90,8 +124,10 @@ export async function getUserProfile(userId?: string) {
       phoneNumber: "+91 98765 43210",
       city: "Ahmedabad",
       country: "India",
-      additionalInfo: "Passionate globetrotter exploring architectural wonders, mountain landscapes, and cultural heritage around the globe.",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+      additionalInfo:
+        "Passionate globetrotter exploring architectural wonders, mountain landscapes, and cultural heritage around the globe.",
+      photoUrl:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
       memberSince: "March 2024",
       tripsCount: 6,
     };
@@ -112,9 +148,23 @@ export async function updateUserProfile(
   }
 ) {
   try {
-    if (userId && !userId.startsWith("demo-")) {
+    let targetUserId = userId;
+    if (!targetUserId || targetUserId === "demo-user-001") {
+      try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get("auth_token")?.value;
+        if (token) {
+          const { payload } = await jwtVerify(token, JWT_SECRET);
+          if (payload?.userId) {
+            targetUserId = payload.userId as string;
+          }
+        }
+      } catch {}
+    }
+
+    if (targetUserId && !targetUserId.startsWith("demo-")) {
       const updated = await prisma.user.update({
-        where: { id: userId },
+        where: { id: targetUserId },
         data: {
           firstName: data.firstName,
           lastName: data.lastName,
@@ -145,7 +195,7 @@ export async function updateUserProfile(
     return {
       success: true,
       user: {
-        id: userId || "demo-user-001",
+        id: targetUserId || "demo-user-001",
         ...data,
       },
     };
