@@ -1,0 +1,217 @@
+"use server";
+
+import { prisma } from "../lib/db";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+export async function generateSuggestions(place: string, startDate: string, endDate: string) {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return { error: "GEMINI_API_KEY is not configured." };
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+
+    const prompt = `System Prompt: You are a professional and highly knowledgeable trip planner. Your objective is to create a focused and highly relevant itinerary based solely on the details provided by the user. You must ONLY suggest places, landmarks, and activities that are strictly relevant to the specific location entered by the user. Do not suggest places outside of this location.
+
+User Details:
+- Destination: ${place}
+- Start Date: ${startDate}
+- End Date: ${endDate}
+
+Task: Suggest exactly 6 specific places to visit or activities to perform in ${place} during the specified dates. 
+
+Return the result STRICTLY as a JSON array of objects. Do not wrap in markdown tags like \`\`\`json.
+Each object must have:
+- "title": A short name for the place or activity.
+- "description": A 1-2 sentence description.
+
+Example:
+[
+  {
+    "title": "Eiffel Tower",
+    "description": "An iconic wrought-iron lattice tower on the Champ de Mars in Paris."
+  }
+]`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    
+    // Clean markdown formatting if present
+    if (text.startsWith("\`\`\`json")) {
+        text = text.replace(/^\`\`\`json\n/, "").replace(/\n\`\`\`$/, "");
+    }
+    if (text.startsWith("\`\`\`")) {
+        text = text.replace(/^\`\`\`\n/, "").replace(/\n\`\`\`$/, "");
+    }
+
+    const parsed = JSON.parse(text);
+    return { success: true, suggestions: parsed };
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return { error: "Failed to generate suggestions. Please try again." };
+  }
+}
+
+export async function createTrip(data: { place: string, startDate: string, endDate: string, suggestions: string, userId?: string }) {
+  try {
+    let finalUserId = data.userId;
+    if (!finalUserId) {
+      let firstUser = await prisma.user.findFirst();
+      if (!firstUser) {
+         firstUser = await prisma.user.create({
+            data: {
+              firstName: "Guest",
+              lastName: "User",
+              email: `guest_${Date.now()}@example.com`,
+              phoneNumber: "1234567890",
+              city: "Unknown",
+              country: "Unknown",
+              password: "dummy"
+            }
+         });
+      }
+      finalUserId = firstUser.id;
+    }
+
+    const trip = await prisma.trip.create({
+      data: {
+        place: data.place,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+        suggestions: data.suggestions,
+        userId: finalUserId
+      }
+    });
+    return { success: true, trip };
+  } catch (error) {
+    console.error("Trip creation error:", error);
+    return { error: "An error occurred while saving the trip." };
+  }
+}
+
+export async function generateItinerary(tripId: string, activityName: string) {
+  try {
+    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) {
+      return { error: "Trip not found." };
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return { error: "GEMINI_API_KEY is not configured." };
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+
+    const prompt = `System Prompt: You are an expert itinerary planner. Generate a detailed, step-by-step itinerary for a trip to ${trip.place} between ${trip.startDate.toDateString()} and ${trip.endDate.toDateString()}. The main focus of this itinerary should be on the activity/location: "${activityName}".
+    
+Divide the itinerary into logical sections (e.g., travel sections, specific day plans, hotel check-ins, or specific activities).
+Return strictly a JSON array of objects. Do not use markdown tags like \`\`\`json.
+Each object must have:
+- "title": A descriptive title for the section (e.g., "Section 1: Hotel Check-in" or "Day 1: Exploring Saputara").
+- "description": A detailed description of what happens in this section.
+- "dateRange": A strict date string in YYYY-MM-DD format (e.g., "2026-10-12"). Do NOT use text like 'Morning'.
+- "budget": An estimated budget for this section strictly in Indian Rupees (e.g., "₹2000").
+
+Make sure to provide at least 3-4 sections to cover the trip.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    
+    if (text.startsWith("\`\`\`json")) {
+        text = text.replace(/^\`\`\`json\n/, "").replace(/\n\`\`\`$/, "");
+    }
+    if (text.startsWith("\`\`\`")) {
+        text = text.replace(/^\`\`\`\n/, "").replace(/\n\`\`\`$/, "");
+    }
+
+    const parsed = JSON.parse(text);
+
+    // Save sections to db
+    const savedSections = [];
+    for (const section of parsed) {
+      const saved = await prisma.itinerarySection.create({
+        data: {
+          title: section.title,
+          description: section.description,
+          dateRange: section.dateRange,
+          budget: section.budget,
+          tripId: trip.id
+        }
+      });
+      savedSections.push(saved);
+    }
+
+    return { success: true, sections: savedSections };
+  } catch (error) {
+    console.error("Itinerary generation error:", error);
+    return { error: "Failed to generate itinerary. Please try again." };
+  }
+}
+
+export async function getItinerary(tripId: string) {
+  try {
+    const sections = await prisma.itinerarySection.findMany({
+      where: { tripId },
+      orderBy: { createdAt: 'asc' }
+    });
+    return { success: true, sections };
+  } catch (error) {
+    console.error("Get itinerary error:", error);
+    return { error: "Failed to fetch itinerary." };
+  }
+}
+
+export async function addItinerarySection(tripId: string, data: { title: string, description: string, dateRange: string, budget: string }) {
+  try {
+    const section = await prisma.itinerarySection.create({
+      data: {
+        tripId,
+        title: data.title,
+        description: data.description,
+        dateRange: data.dateRange,
+        budget: data.budget
+      }
+    });
+    return { success: true, section };
+  } catch (error) {
+    console.error("Add section error:", error);
+    return { error: "Failed to add section." };
+  }
+}
+
+export async function updateItinerarySection(sectionId: string, data: { title: string, description: string, dateRange: string, budget: string }) {
+  try {
+    const section = await prisma.itinerarySection.update({
+      where: { id: sectionId },
+      data: {
+        title: data.title,
+        description: data.description,
+        dateRange: data.dateRange,
+        budget: data.budget
+      }
+    });
+    return { success: true, section };
+  } catch (error) {
+    console.error("Update section error:", error);
+    return { error: "Failed to update section." };
+  }
+}
+
+export async function deleteItinerarySection(sectionId: string) {
+  try {
+    await prisma.itinerarySection.delete({
+      where: { id: sectionId }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Delete section error:", error);
+    return { error: "Failed to delete section." };
+  }
+}
