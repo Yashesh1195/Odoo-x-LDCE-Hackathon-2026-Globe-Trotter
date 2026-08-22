@@ -22,11 +22,11 @@ export function getClient(): GoogleGenAI {
 // Primary: gemini-3.5-flash-lite (or gemini-2.5-flash-lite)
 // Fallback: gemini-3.1-flash-lite (or gemini-2.0-flash-lite)
 export const GEMINI_MODELS = [
-  "gemini-3.5-flash-lite",
-  "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
   "gemini-1.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-2.5-flash-lite",
 ];
 
 // ── Prompt Builders ─────────────────────────────────────────────────
@@ -57,10 +57,6 @@ Generate a complete, structured itinerary with:
 3. Step-by-Step Day-by-Day breakdown for all ${days} days with Morning, Afternoon, Evening activities and realistic estimated budgets.
 4. Total Budget Breakdown Table.
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 79174cde39e7a2176acd9e98904221892b22878a
 ## YOUR TASK
 Generate a **complete, actionable, highly detailed trip plan** in clean, professional Markdown. Be specific with real place names, real restaurants, real hotels, and realistic prices.
 
@@ -137,7 +133,10 @@ Categorized checklist:
 - Prices in INR (₹)
 - Keep the tone professional, clean, and editorial — like a high-end travel magazine
 - Do NOT add any disclaimer about prices being estimates at the start or end`;
+<<<<<<< HEAD
 
+=======
+>>>>>>> d9435441bd01badbbc2a3b3102917bf64cb6af47
 }
 
 // ── Streaming Generation with 2-Model Fallback ───────────────────────
