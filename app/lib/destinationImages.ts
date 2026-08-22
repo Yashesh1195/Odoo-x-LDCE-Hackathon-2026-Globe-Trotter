@@ -15,6 +15,14 @@ export const REALTIME_DESTINATION_PHOTOS: Record<string, string> = {
   california: "https://images.unsplash.com/photo-1580655653885-65763b2597d0?w=1200&auto=format&fit=crop&q=80",
   sanfrancisco: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80",
 
+  // ── Delhi & North India ──
+  delhi: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&auto=format&fit=crop&q=80",
+  newdelhi: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&auto=format&fit=crop&q=80",
+  qutubminar: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&auto=format&fit=crop&q=80",
+  qutbminar: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&auto=format&fit=crop&q=80",
+  qutub: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&auto=format&fit=crop&q=80",
+  indiagate: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&auto=format&fit=crop&q=80",
+
   // ── Gujarat State & Iconic Tourism Landmarks ──
   gujarat: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=1200&auto=format&fit=crop&q=80",
   statueofunity: "https://images.unsplash.com/photo-1617854818583-09e7f077a156?w=1200&auto=format&fit=crop&q=80",

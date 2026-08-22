@@ -54,7 +54,7 @@ Generate a complete, structured itinerary with:
 3. Step-by-Step Day-by-Day breakdown for all ${days} days with Morning, Afternoon, Evening activities and realistic estimated budgets.
 4. Total Budget Breakdown Table.
 
-<<<<<<< HEAD
+
 ## YOUR TASK
 Generate a **complete, actionable, highly detailed trip plan** in clean, professional Markdown. Be specific with real place names, real restaurants, real hotels, and realistic prices.
 
@@ -131,9 +131,7 @@ Categorized checklist:
 - Prices in INR (₹)
 - Keep the tone professional, clean, and editorial — like a high-end travel magazine
 - Do NOT add any disclaimer about prices being estimates at the start or end`;
-=======
-Format cleanly in Markdown with bold headers and bullet points. No emojis.`;
->>>>>>> 106c45a4aa35c9ca8f7d97697fece2c082f27136
+
 }
 
 // ── Streaming Generation with 2-Model Fallback ───────────────────────

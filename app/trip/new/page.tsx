@@ -110,45 +110,6 @@ export default function PlanTripPage() {
         <TopNav />
 
         {/* Hero Band */}
-<<<<<<< HEAD
-        <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-16 sm:py-20 px-6 lg:px-10">
-          <div className="max-w-[1440px] mx-auto">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-white">
-              Plan a New Trip
-            </h1>
-            <p className="text-lg sm:text-xl font-light text-[var(--on-dark-soft)] max-w-2xl">
-              Enter your destination and dates, and let our AI curate authentic experiences and itineraries for your journey.
-            </p>
-          </div>
-        </div>
-
-        {/* Form Section */}
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-12 border-b border-[var(--hairline)]">
-          <form onSubmit={handleGenerate} className="max-w-xl mx-auto space-y-6">
-            {error && (
-              <div className="text-[var(--error)] text-sm font-bold p-4 bg-red-50 border border-[var(--error)] animate-fadeIn">
-                {error}
-              </div>
-            )}
-            {successMsg && (
-              <div className="text-[var(--success)] text-sm font-bold p-4 bg-green-50 border border-[var(--success)] animate-fadeIn">
-                {successMsg}
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold uppercase tracking-[1.5px] text-[var(--ink)]">
-                Destination City / Country:
-              </label>
-              <input 
-                type="text" 
-                required
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                placeholder="e.g. Paris, Tokyo, Bali, New York, Manali"
-                className="bmw-input bg-[var(--canvas)] text-[var(--ink)] h-12 px-4 rounded-none border border-[var(--hairline-strong)] text-base w-full focus:outline-none focus:border-[var(--ink)]"
-              />
-=======
         <div className="bg-[var(--surface-dark)] text-[var(--on-dark)] py-10 sm:py-14 px-6 sm:px-12 lg:px-20 border-b border-black">
           <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
@@ -186,7 +147,6 @@ export default function PlanTripPage() {
           {errorMsg && (
             <div className="mb-6 p-4 bg-red-50 border border-[var(--error)] text-[var(--error)] text-sm font-bold animate-fadeIn">
               {errorMsg}
->>>>>>> 0e1d2db8bc2ff38d1f31f055f8afee49461500d9
             </div>
           )}
 
