@@ -38,21 +38,18 @@ export default function TripOverviewCard({
       color: "var(--warning)",
       bg: "rgba(245,158,11,0.08)",
       border: "rgba(245,158,11,0.3)",
-      icon: "●",
     },
     upcoming: {
       label: "Upcoming",
       color: "var(--primary)",
       bg: "rgba(28,105,212,0.08)",
       border: "rgba(28,105,212,0.3)",
-      icon: "◆",
     },
     completed: {
       label: "Completed",
       color: "var(--success)",
       bg: "rgba(34,197,94,0.08)",
       border: "rgba(34,197,94,0.3)",
-      icon: "✓",
     },
   };
 
@@ -144,7 +141,7 @@ export default function TripOverviewCard({
                   color: status.color,
                 }}
               >
-                {status.icon} {status.label}
+                {status.label}
               </span>
             </div>
           </div>
