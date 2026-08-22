@@ -24,22 +24,20 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between px-8 bg-[var(--canvas)] text-[var(--ink)] h-[64px] border-b border-[var(--hairline)]">
       <div className="flex items-center gap-8">
-        <Link href="/dashboard" className="font-bold text-[18px]">
+        <Link href="/dashboard" className="font-bold text-[18px] no-underline text-[var(--ink)]">
           GT - Globe Trotter
         </Link>
         <div className="hidden md:flex gap-6">
-<<<<<<< Updated upstream
-          <Link href="/activity/search" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors">
-            Search Activity
-=======
-          <Link href="/dashboard" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors">
+          <Link href="/dashboard" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors no-underline text-[var(--ink)]">
             Dashboard
->>>>>>> Stashed changes
           </Link>
-          <Link href="/trip/new" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors">
+          <Link href="/activity/search" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors no-underline text-[var(--ink)]">
+            Search Activity
+          </Link>
+          <Link href="/trip/new" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors no-underline text-[var(--ink)]">
             Plan a Trip
           </Link>
-          <Link href="/trips" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors">
+          <Link href="/trips" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors no-underline text-[var(--ink)]">
             My Trips
           </Link>
         </div>
@@ -47,7 +45,7 @@ export default function Navbar() {
       <div className="flex items-center gap-4">
         <Link
           href="/profile"
-          className="w-10 h-10 rounded-full bg-[var(--surface-soft)] hover:border-[var(--primary)] border border-[var(--hairline-strong)] flex items-center justify-center cursor-pointer transition-all overflow-hidden group"
+          className="w-10 h-10 rounded-full bg-[var(--surface-soft)] hover:border-[var(--primary)] border border-[var(--hairline-strong)] flex items-center justify-center cursor-pointer transition-all overflow-hidden group no-underline"
           title={user ? `${user.firstName} ${user.lastName} (View Profile)` : "User Profile"}
         >
           {user?.photoUrl ? (

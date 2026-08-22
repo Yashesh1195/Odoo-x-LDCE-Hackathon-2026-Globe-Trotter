@@ -1,57 +1,92 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-<<<<<<< Updated upstream
 import { useRouter, usePathname } from "next/navigation";
-=======
-import { usePathname } from "next/navigation";
 import { getUserProfile, type UserProfileData } from "../actions/profile";
->>>>>>> Stashed changes
+
+export interface TopNavUser {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  email?: string;
+  city?: string;
+  country?: string;
+  photoUrl?: string | null;
+  avatar?: string;
+}
 
 interface TopNavProps {
-  user?: {
-    firstName?: string;
-    lastName?: string;
-    name?: string;
-    email?: string;
-    city?: string;
-    country?: string;
-  } | null;
+  user?: TopNavUser | null;
 }
 
 export default function TopNav({ user: propUser }: TopNavProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-<<<<<<< Updated upstream
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [localUser, setLocalUser] = useState<{
-    firstName?: string;
-    lastName?: string;
-    name?: string;
-    email?: string;
-    city?: string;
-    country?: string;
-  } | null>(null);
+  const [fetchedUser, setFetchedUser] = useState<UserProfileData | null>(null);
+  const [localUser, setLocalUser] = useState<TopNavUser | null>(null);
+
+  const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname() || "";
 
+  // Load user from localStorage and profile action
   useEffect(() => {
     try {
       const stored = localStorage.getItem("gt_user");
       if (stored) {
         setLocalUser(JSON.parse(stored));
       }
-    } catch { }
-  }, []);
+    } catch {
+      // ignore
+    }
 
-  const activeUser = propUser || localUser;
+    async function loadUser() {
+      try {
+        const res = await getUserProfile();
+        if (res?.success && res.user) {
+          setFetchedUser(res.user);
+        }
+      } catch (err) {
+        console.error("Failed to load user profile in TopNav:", err);
+      }
+    }
+
+    if (!propUser) {
+      loadUser();
+    }
+  }, [propUser]);
+
+  // Close menus when route changes
+  useEffect(() => {
+    setUserMenuOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userMenuOpen]);
+
+  const activeUser: TopNavUser | null = propUser || fetchedUser || localUser;
 
   const getInitials = () => {
     if (!activeUser) return "GT";
     let f = activeUser.firstName ? activeUser.firstName.trim()[0] : "";
     let l = activeUser.lastName ? activeUser.lastName.trim()[0] : "";
 
-    // If last name initial is missing, try splitting name or full name
     if (!l && activeUser.name) {
       const parts = activeUser.name.trim().split(/\s+/);
       if (parts.length > 1) {
@@ -67,14 +102,21 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("gt_user");
-    document.cookie = "gt_user_id=; path=/; max-age=0";
-    document.cookie = "auth_token=; path=/; max-age=0";
+    try {
+      localStorage.removeItem("gt_user");
+      document.cookie = "gt_user_id=; path=/; max-age=0";
+      document.cookie = "auth_token=; path=/; max-age=0";
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+    setUserMenuOpen(false);
+    setMobileMenuOpen(false);
     router.push("/login");
   };
 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard" },
+    { label: "Plan a Trip", href: "/trip/new" },
     { label: "Search Activity", href: "/activity/search" },
     { label: "My Trips", href: "/trips" },
   ].map((link) => {
@@ -85,32 +127,12 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
       active: isExact || isPrefix,
     };
   });
-=======
-  const [user, setUser] = useState<UserProfileData | null>(null);
-  const pathname = usePathname();
 
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const res = await getUserProfile();
-        if (res.success && res.user) {
-          setUser(res.user);
-        }
-      } catch (err) {
-        console.error("Failed to load user in TopNav:", err);
-      }
-    }
-    loadUser();
-  }, []);
-
-  const navLinks = [
-    { label: "Dashboard", href: "/dashboard", active: pathname === "/dashboard" },
-    { label: "My Trips", href: "/trips", active: pathname === "/trips" },
-    { label: "Plan a Trip", href: "/trip/new", active: pathname === "/trip/new" },
-  ];
->>>>>>> Stashed changes
-
-  const isProfileActive = pathname === "/profile";
+  const isProfileActive = pathname === "/profile" || pathname.startsWith("/profile");
+  const userPhoto = activeUser?.photoUrl || activeUser?.avatar;
+  const displayName = activeUser?.firstName
+    ? `${activeUser.firstName} ${activeUser.lastName || ""}`.trim()
+    : activeUser?.name || "GlobeTrotter Member";
 
   return (
     <nav
@@ -122,7 +144,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
         {/* ── Brand ── */}
         <Link href="/dashboard" className="flex items-center gap-2 no-underline">
           <div
-            className="flex items-center justify-center bg-[var(--primary)] text-white"
+            className="flex items-center justify-center bg-[var(--primary)] text-white shadow-sm"
             style={{
               width: 36,
               height: 36,
@@ -145,7 +167,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
           </span>
         </Link>
 
-        {/* ── Desktop Nav (No separate Profile link) ── */}
+        {/* ── Desktop Nav Links ── */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
@@ -156,9 +178,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                 fontSize: 14,
                 fontWeight: link.active ? 700 : 400,
                 letterSpacing: "0.3px",
-                color: link.active
-                  ? "var(--ink)"
-                  : "var(--muted)",
+                color: link.active ? "var(--ink)" : "var(--muted)",
               }}
             >
               {link.label}
@@ -175,69 +195,45 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
           ))}
         </div>
 
-<<<<<<< Updated upstream
-        {/* ── Profile Avatar & Dropdown ── */}
-        <div className="flex items-center gap-3 relative">
+        {/* ── Profile Avatar & Dropdown / Mobile Toggle ── */}
+        <div className="flex items-center gap-3 relative" ref={menuRef}>
           <button
             id="profile-avatar"
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center justify-center bg-[#1c69d4] text-white border border-[var(--primary)] cursor-pointer hover:bg-[#0653b6] transition-colors shadow-sm"
+            onClick={() => setUserMenuOpen((prev) => !prev)}
+            className="flex items-center justify-center overflow-hidden transition-all cursor-pointer rounded-full relative group border-none p-0 bg-transparent"
             style={{
               width: 38,
               height: 38,
-              borderRadius: "9999px",
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: "0.5px",
-=======
-        {/* ── Profile Avatar in Top-Right with User Photo ── */}
-        <div className="flex items-center gap-3">
-          <Link
-            id="profile-avatar"
-            href="/profile"
-            className="flex items-center justify-center overflow-hidden transition-all no-underline relative group cursor-pointer"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "9999px",
-              border: isProfileActive
-                ? "2px solid var(--primary)"
-                : "2px solid var(--hairline-strong)",
+              outline:
+                isProfileActive || userMenuOpen
+                  ? "2px solid var(--primary)"
+                  : "2px solid var(--hairline-strong)",
+              outlineOffset: "1px",
               backgroundColor: "var(--surface-soft)",
-              boxShadow: isProfileActive ? "0 0 0 2px rgba(28,105,212,0.25)" : "none",
->>>>>>> Stashed changes
             }}
-            title={user ? `${user.firstName} ${user.lastName} (View Profile)` : "View Profile"}
-            aria-label="User profile"
-            title={
-              activeUser
-                ? `${activeUser.firstName || ""} ${activeUser.lastName || activeUser.name || ""}`.trim()
-                : "User Profile"
-            }
+            title={displayName ? `${displayName} (Account Menu)` : "Account Menu"}
+            aria-label="User profile and navigation menu"
+            aria-expanded={userMenuOpen}
           >
-<<<<<<< Updated upstream
-            {getInitials()}
-          </button>
-=======
-            {user?.photoUrl ? (
+            {userPhoto ? (
               <img
-                src={user.photoUrl}
-                alt={user.firstName || "User profile"}
+                src={userPhoto}
+                alt={displayName}
                 className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform"
               />
             ) : (
-              <span
+              <div
+                className="w-full h-full flex items-center justify-center bg-[#1c69d4] text-white hover:bg-[#0653b6] transition-colors"
                 style={{
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 700,
-                  color: isProfileActive ? "var(--primary)" : "var(--ink)",
+                  letterSpacing: "0.5px",
                 }}
               >
-                {user?.firstName ? `${user.firstName[0]}${user.lastName?.[0] || ""}` : "GT"}
-              </span>
+                {getInitials()}
+              </div>
             )}
-          </Link>
->>>>>>> Stashed changes
+          </button>
 
           {/* User Profile Dropdown Menu */}
           {userMenuOpen && (
@@ -246,37 +242,76 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
               style={{ borderRadius: 0 }}
             >
               <div className="border-b border-[var(--hairline)] pb-3 mb-3">
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-                  {activeUser?.firstName
-                    ? `${activeUser.firstName} ${activeUser.lastName || ""}`
-                    : activeUser?.name || "Member Profile"}
+                <div
+                  className="truncate"
+                  style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}
+                >
+                  {displayName}
                 </div>
                 {activeUser?.email && (
-                  <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>
+                  <div
+                    className="truncate"
+                    style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}
+                  >
                     {activeUser.email}
                   </div>
                 )}
                 {activeUser?.city && activeUser?.country && (
-                  <div style={{ fontSize: 11, color: "var(--primary)", fontWeight: 700, marginTop: 4 }}>
+                  <div
+                    className="truncate"
+                    style={{
+                      fontSize: 11,
+                      color: "var(--primary)",
+                      fontWeight: 700,
+                      marginTop: 4,
+                    }}
+                  >
                     📍 {activeUser.city}, {activeUser.country}
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
+                <Link
+                  href="/profile"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
+                >
+                  <span>My Profile</span>
+                  <span>›</span>
+                </Link>
                 <Link
                   href="/trips"
                   onClick={() => setUserMenuOpen(false)}
-                  className="text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] py-1 no-underline uppercase tracking-wider"
+                  className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
                 >
-                  My Saved Trips ›
+                  <span>My Saved Trips</span>
+                  <span>›</span>
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-xs font-bold text-[#dc2626] hover:underline text-left py-1 uppercase tracking-wider cursor-pointer border-none bg-transparent"
+                <Link
+                  href="/trip/new"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
                 >
-                  Sign Out
-                </button>
+                  <span>Plan a New Trip</span>
+                  <span>›</span>
+                </Link>
+                <Link
+                  href="/activity/search"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
+                >
+                  <span>Search Activities</span>
+                  <span>›</span>
+                </Link>
+                <div className="border-t border-[var(--hairline)] my-1 pt-1">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-xs font-bold text-[#dc2626] hover:bg-red-50 hover:text-red-700 text-left px-2 py-2 uppercase tracking-wider cursor-pointer border-none bg-transparent transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -342,6 +377,25 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/profile"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-3 no-underline border-b border-[var(--hairline)]"
+            style={{
+              fontSize: 14,
+              fontWeight: isProfileActive ? 700 : 400,
+              letterSpacing: "0.3px",
+              color: isProfileActive ? "var(--ink)" : "var(--muted)",
+            }}
+          >
+            My Profile
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full text-left py-3 text-sm font-bold text-[#dc2626] border-none bg-transparent cursor-pointer"
+          >
+            Sign Out
+          </button>
         </div>
       )}
     </nav>
