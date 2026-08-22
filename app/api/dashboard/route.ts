@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { mockDestinations, mockTrips, mockBudgetSummary } from "@/app/lib/mockData";
 import type { DashboardData, Trip, TripStatus, User, BudgetSummary, Destination } from "@/app/lib/types";
+import { jwtVerify } from "jose";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "fallback_secret_for_hackathon"
+);
 
 // Helper to determine destination region matching from user country
 function getUserPreferredRegion(country: string = "", city: string = ""): string {
@@ -70,7 +75,16 @@ export async function GET(request: NextRequest) {
   const filter = searchParams.get("filter") ?? "all";
   const sort = searchParams.get("sort") ?? "name";
   const order = searchParams.get("order") ?? "asc";
-  const reqUserId = searchParams.get("userId") || request.cookies.get("gt_user_id")?.value;
+  const token = request.cookies.get("auth_token")?.value;
+  let tokenUserId: string | null = null;
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      tokenUserId = (payload?.userId as string) || null;
+    } catch {}
+  }
+
+  const reqUserId = tokenUserId || searchParams.get("userId");
 
   let activeUser: any = null;
 
@@ -82,7 +96,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!activeUser) {
-      // Fallback to latest created user in database
       activeUser = await prisma.user.findFirst({
         orderBy: { createdAt: "desc" },
       });

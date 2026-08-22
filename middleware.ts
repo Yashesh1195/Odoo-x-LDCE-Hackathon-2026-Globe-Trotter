@@ -6,46 +6,56 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fallback_secret_for_hackathon'
 );
 
-// Add routes that should be accessible without authentication here
+// Public routes that unauthenticated users can access
 const publicRoutes = ['/', '/login', '/register'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if the current route is a public route
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Allow access to Next.js static files, images, and favicon
+  // Allow static files, images, favicon, Next internals
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
-    pathname.includes('.') // typically matches files like .ico, .png, etc.
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|js|map|txt|json)$/)
   ) {
     return NextResponse.next();
   }
 
-  // Get the token from cookies
   const token = request.cookies.get('auth_token')?.value;
+  let isAuthenticated = false;
 
-  if (!token) {
-    // No token found, redirect to login
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (token) {
+    try {
+      await jwtVerify(token, JWT_SECRET);
+      isAuthenticated = true;
+    } catch {
+      isAuthenticated = false;
+    }
   }
 
-  try {
-    // Verify the JWT token using jose
-    await jwtVerify(token, JWT_SECRET);
-    // Token is valid, allow request to proceed
+  // If user is already authenticated and visits login/register, redirect to dashboard
+  if (isAuthenticated && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // If route is public, allow access
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
-  } catch (error) {
-    // Token verification failed (expired, invalid), redirect to login
+  }
+
+  // If not authenticated:
+  if (!isAuthenticated) {
+    // For API routes, return 401 Unauthorized JSON
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // For page routes, redirect to login
     return NextResponse.redirect(new URL('/login', request.url));
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  // Apply middleware to all routes
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

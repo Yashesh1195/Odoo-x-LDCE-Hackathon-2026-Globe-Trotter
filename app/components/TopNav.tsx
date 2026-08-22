@@ -1,4 +1,4 @@
-"use client";
+m"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -35,7 +35,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
       if (stored) {
         setLocalUser(JSON.parse(stored));
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const activeUser = propUser || localUser;

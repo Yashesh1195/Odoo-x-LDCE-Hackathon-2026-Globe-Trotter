@@ -2,6 +2,7 @@
 
 import { prisma } from "../lib/db";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getCurrentUser } from "./auth";
 
 export async function generateSuggestions(place: string, startDate: string, endDate: string) {
   try {
@@ -59,21 +60,26 @@ export async function createTrip(data: { place: string, startDate: string, endDa
   try {
     let finalUserId = data.userId;
     if (!finalUserId) {
-      let firstUser = await prisma.user.findFirst();
-      if (!firstUser) {
-         firstUser = await prisma.user.create({
-            data: {
-              firstName: "Guest",
-              lastName: "User",
-              email: `guest_${Date.now()}@example.com`,
-              phoneNumber: "1234567890",
-              city: "Unknown",
-              country: "Unknown",
-              password: "dummy"
-            }
-         });
+      const currentUser = await getCurrentUser();
+      if (currentUser?.id) {
+        finalUserId = currentUser.id;
+      } else {
+        let firstUser = await prisma.user.findFirst();
+        if (!firstUser) {
+           firstUser = await prisma.user.create({
+              data: {
+                firstName: "Guest",
+                lastName: "User",
+                email: `guest_${Date.now()}@example.com`,
+                phoneNumber: "1234567890",
+                city: "Unknown",
+                country: "Unknown",
+                password: "dummy"
+              }
+           });
+        }
+        finalUserId = firstUser.id;
       }
-      finalUserId = firstUser.id;
     }
 
     const trip = await prisma.trip.create({

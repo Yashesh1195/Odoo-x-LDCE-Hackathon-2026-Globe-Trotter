@@ -48,17 +48,6 @@ export default function DashboardPage() {
       if (filterOption !== "all") params.set("filter", filterOption);
       if (sortField !== "name") params.set("sort", sortField);
 
-      // Extract active user ID from localStorage
-      try {
-        const storedUser = localStorage.getItem("gt_user");
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          if (parsed?.id) {
-            params.set("userId", parsed.id);
-          }
-        }
-      } catch {}
-
       const res = await fetch(`/api/dashboard?${params.toString()}`);
       const json: DashboardData = await res.json();
       setData(json);
