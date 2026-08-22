@@ -247,6 +247,7 @@ export default function LoginScreen({
                     id="username"
                     name="username"
                     type="text"
+                    suppressHydrationWarning={true}
                     autoComplete="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -296,6 +297,7 @@ export default function LoginScreen({
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    suppressHydrationWarning={true}
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -305,6 +307,7 @@ export default function LoginScreen({
                   {/* Show/Hide password toggle */}
                   <button
                     type="button"
+                    suppressHydrationWarning={true}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#6b6b6b] hover:text-[#262626] focus:outline-none"
                     title={showPassword ? "Hide password" : "Show password"}
@@ -363,6 +366,7 @@ export default function LoginScreen({
               {/* 4. Login Button (Wireframe Bottom Element - 0px rectangular, #1c69d4) */}
               <button
                 type="submit"
+                suppressHydrationWarning={true}
                 disabled={isLoading}
                 className="w-full h-12 mt-2 bg-[#1c69d4] hover:bg-[#0653b6] active:bg-[#044293] text-white text-[14px] font-bold uppercase tracking-[1.5px] rounded-none transition-all flex items-center justify-center gap-2 shadow-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >

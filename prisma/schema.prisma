@@ -20,6 +20,7 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   trips          Trip[]
+  communityPosts CommunityPost[]
 }
 
 model Trip {
@@ -45,4 +46,15 @@ model ItinerarySection {
   trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model CommunityPost {
+  id        String   @id @default(cuid())
+  content   String   
+  activity  String?  
+  location  String?  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

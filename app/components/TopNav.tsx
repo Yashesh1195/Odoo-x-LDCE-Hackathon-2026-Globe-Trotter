@@ -118,6 +118,7 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
     { label: "Dashboard", href: "/dashboard" },
     { label: "Plan a Trip", href: "/trip/new" },
     { label: "Search Activity", href: "/activity/search" },
+    { label: "Community", href: "/community" },
     { label: "My Trips", href: "/trips" },
   ].map((link) => {
     const isExact = pathname === link.href;
@@ -302,6 +303,14 @@ export default function TopNav({ user: propUser }: TopNavProps = {}) {
                   className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
                 >
                   <span>Search Activities</span>
+                  <span>›</span>
+                </Link>
+                <Link
+                  href="/community"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center justify-between text-xs font-bold text-[var(--ink)] hover:text-[var(--primary)] hover:bg-[var(--surface-soft)] px-2 py-2 no-underline uppercase tracking-wider transition-colors"
+                >
+                  <span>Community</span>
                   <span>›</span>
                 </Link>
                 <div className="border-t border-[var(--hairline)] my-1 pt-1">
