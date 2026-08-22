@@ -146,10 +146,14 @@ export default function RegisterScreen({
 
       setIsLoading(false);
       setIsSuccess(true);
+      if (result.user) {
+        localStorage.setItem("gt_user", JSON.stringify(result.user));
+        document.cookie = `gt_user_id=${result.user.id}; path=/; max-age=86400`;
+      }
       if (onSuccess) {
         onSuccess(result.user);
       } else {
-        setTimeout(() => router.push("/login"), 1500);
+        setTimeout(() => router.push("/dashboard"), 1200);
       }
     } catch (err) {
       setErrorMessage("An unexpected error occurred. Please try again.");
