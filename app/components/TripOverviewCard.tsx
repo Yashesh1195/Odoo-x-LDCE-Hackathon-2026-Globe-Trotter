@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
+import { getLocationImage } from "@/app/lib/destinationImages";
 
 // DB-sourced trip shape
 export interface DbTrip {
@@ -28,6 +30,7 @@ export default function TripOverviewCard({
   onClick,
 }: TripOverviewCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const tripPhoto = getLocationImage(trip.place);
 
   const statusConfig = {
     ongoing: {
@@ -59,22 +62,23 @@ export default function TripOverviewCard({
     return new Date(dateStr).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
+      year: "numeric",
     });
   };
 
   const getDuration = () => {
     const start = new Date(trip.startDate);
     const end = new Date(trip.endDate);
-    const days = Math.ceil(
+    const days = Math.round(
       (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
     );
-    return `${days} day${days !== 1 ? "s" : ""}`;
+    return days > 0 ? `${days} day${days !== 1 ? "s" : ""}` : "1 day";
   };
 
   return (
     <article
-      id={`trip-overview-${trip.id}`}
-      className="animate-slideUp"
+      id={`trip-card-${trip.id}`}
+      className="card-hover overflow-hidden"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -90,6 +94,22 @@ export default function TripOverviewCard({
       }}
     >
       <div className="flex flex-col sm:flex-row" style={{ minHeight: 0 }}>
+        {/* ── Photo Plate ── */}
+        <div
+          className="relative w-full sm:w-[180px] h-[140px] sm:h-auto flex-shrink-0 overflow-hidden bg-[var(--surface-card)]"
+        >
+          <Image
+            src={tripPhoto}
+            alt={trip.place}
+            fill
+            className="object-cover transition-transform duration-500"
+            style={{
+              transform: isHovered ? "scale(1.05)" : "scale(1)",
+            }}
+            sizes="(max-width: 640px) 100vw, 180px"
+          />
+        </div>
+
         {/* ── Content ── */}
         <div style={{ flex: 1, padding: "20px 24px" }}>
           {/* Top row: Place name + Status badge */}
