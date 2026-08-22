@@ -28,8 +28,10 @@ export default function RegisterScreen({
   });
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -45,8 +47,13 @@ export default function RegisterScreen({
 
   const handlePhotoUpload = (file: File) => {
     if (file && file.type.startsWith("image/")) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage("Image must be less than 5MB.");
+        return;
+      }
       const url = URL.createObjectURL(file);
       setPhotoUrl(url);
+      setPhotoFile(file);
       setErrorMessage("");
     } else {
       setErrorMessage("Please select a valid image file (JPG, PNG, WebP).");
@@ -81,6 +88,7 @@ export default function RegisterScreen({
 
   const handleRemovePhoto = () => {
     setPhotoUrl(null);
+    setPhotoFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -134,17 +142,46 @@ export default function RegisterScreen({
     }
 
     setIsLoading(true);
+    setUploadProgress("");
 
     try {
-      const result = await registerUser({ ...formData, photoUrl });
+      // Upload photo to Cloudinary if a file was selected
+      let cloudinaryUrl = photoUrl;
+      if (photoFile) {
+        setUploadProgress("Uploading photo...");
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", photoFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json();
+          setErrorMessage(uploadErr.error || "Failed to upload photo.");
+          setIsLoading(false);
+          setUploadProgress("");
+          return;
+        }
+
+        const uploadData = await uploadRes.json();
+        cloudinaryUrl = uploadData.url;
+        setUploadProgress("Photo uploaded ✓");
+      }
+
+      setUploadProgress("Creating account...");
+      const result = await registerUser({ ...formData, photoUrl: cloudinaryUrl });
 
       if (result.error) {
         setErrorMessage(result.error);
         setIsLoading(false);
+        setUploadProgress("");
         return;
       }
 
       setIsLoading(false);
+      setUploadProgress("");
       setIsSuccess(true);
       if (onSuccess) {
         onSuccess(result.user);
@@ -154,6 +191,7 @@ export default function RegisterScreen({
     } catch (err) {
       setErrorMessage("An unexpected error occurred. Please try again.");
       setIsLoading(false);
+      setUploadProgress("");
     }
   };
 
@@ -575,7 +613,7 @@ export default function RegisterScreen({
                         d="M4 12a8 8 0 018-8v8H4z"
                       />
                     </svg>
-                    <span>PROCESSING REGISTRATION...</span>
+                    <span>{uploadProgress || "PROCESSING REGISTRATION..."}</span>
                   </>
                 ) : (
                   <span>REGISTER USERS</span>

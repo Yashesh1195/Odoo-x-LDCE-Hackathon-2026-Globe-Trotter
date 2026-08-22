@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import type { UserProfileData } from "../actions/profile";
 import { logoutUser } from "../actions/auth";
@@ -23,6 +23,11 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
   const [country, setCountry] = useState(user.country);
   const [additionalInfo, setAdditionalInfo] = useState(user.additionalInfo || "");
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || "");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Preset avatar choices
   const avatarPresets = [
@@ -40,6 +45,8 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
     setCountry(user.country);
     setAdditionalInfo(user.additionalInfo || "");
     setPhotoUrl(user.photoUrl || "");
+    setPhotoFile(null);
+    setPhotoPreview(null);
     setIsEditing(false);
   };
 
@@ -48,6 +55,34 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
     setIsSaving(true);
     setSaveSuccess(false);
 
+    let finalPhotoUrl = photoUrl;
+
+    // Upload new photo to Cloudinary if a file was selected
+    if (photoFile) {
+      setIsUploading(true);
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", photoFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          finalPhotoUrl = uploadData.url;
+          setPhotoUrl(finalPhotoUrl);
+        } else {
+          console.error("Photo upload failed");
+        }
+      } catch (err) {
+        console.error("Photo upload error:", err);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
     const success = await onSave({
       firstName,
       lastName,
@@ -55,10 +90,12 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
       city,
       country,
       additionalInfo,
-      photoUrl,
+      photoUrl: finalPhotoUrl,
     });
 
     setIsSaving(false);
+    setPhotoFile(null);
+    setPhotoPreview(null);
     if (success) {
       setSaveSuccess(true);
       setIsEditing(false);
@@ -498,18 +535,106 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
                     />
                   </div>
 
-                  {/* Avatar URL */}
-                  <div className="flex flex-col gap-1.5">
+                  {/* Profile Photo Upload */}
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
                     <label className="text-[12px] font-bold uppercase tracking-[1.5px] text-[var(--ink)]">
-                      Photo URL (Optional)
+                      Profile Photo
                     </label>
-                    <input
-                      type="url"
-                      value={photoUrl}
-                      onChange={(e) => setPhotoUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="bmw-input bg-white border border-[var(--hairline-strong)] px-4 text-sm h-11 text-[var(--ink)] focus:outline-none focus:border-[var(--ink)] rounded-none"
-                    />
+                    <div className="flex items-center gap-4">
+                      {/* Current / Preview photo */}
+                      <div
+                        className="relative overflow-hidden bg-[var(--surface-soft)] shrink-0"
+                        style={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: "9999px",
+                          border: "2px solid var(--hairline-strong)",
+                        }}
+                      >
+                        {(photoPreview || photoUrl) ? (
+                          <img
+                            src={photoPreview || photoUrl}
+                            alt="Preview"
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full rounded-full flex items-center justify-center text-[var(--muted)]">
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upload button + hidden file input */}
+                      <div className="flex flex-col gap-1.5">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file && file.type.startsWith("image/")) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                alert("Image must be less than 5MB");
+                                return;
+                              }
+                              setPhotoFile(file);
+                              setPhotoPreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="cursor-pointer flex items-center gap-2 hover:bg-[var(--surface-soft)] transition-colors"
+                          style={{
+                            height: 36,
+                            padding: "0 14px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            letterSpacing: "1px",
+                            textTransform: "uppercase" as const,
+                            border: "1px solid var(--hairline-strong)",
+                            backgroundColor: "transparent",
+                            color: "var(--ink)",
+                          }}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {photoFile ? "Change Photo" : "Upload Photo"}
+                        </button>
+                        {photoFile && (
+                          <span className="text-[11px] text-[var(--success)] font-bold">
+                            ✓ {photoFile.name} selected
+                          </span>
+                        )}
+                        {!photoFile && (
+                          <span className="text-[11px] text-[var(--muted)] font-light">
+                            JPG, PNG, WebP — max 5MB
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Remove photo */}
+                      {(photoPreview || photoUrl) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPhotoUrl("");
+                            setPhotoFile(null);
+                            setPhotoPreview(null);
+                            if (fileInputRef.current) fileInputRef.current.value = "";
+                          }}
+                          className="text-[11px] font-bold uppercase tracking-wider text-red-600 hover:underline cursor-pointer self-center"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -543,7 +668,7 @@ export default function ProfileHero({ user, onSave }: ProfileHeroProps) {
                       border: "none",
                     }}
                   >
-                    {isSaving ? "SAVING..." : "SAVE CHANGES"}
+                    {isSaving ? (isUploading ? "UPLOADING PHOTO..." : "SAVING...") : "SAVE CHANGES"}
                   </button>
 
                   <button
