@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import Link from "next/link";
 
+import { registerUser } from "../actions/auth";
+
 interface RegisterScreenProps {
   onNavigateToLogin?: () => void;
   onSuccess?: (userData: any) => void;
@@ -21,6 +23,7 @@ export default function RegisterScreen({
     city: "",
     country: "",
     additionalInfo: "",
+    password: "", // Add password field
   });
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -91,6 +94,7 @@ export default function RegisterScreen({
       country: "Germany",
       additionalInfo:
         "Senior Logistics Director requesting expedited multi-region access for GT fleet management operations.",
+      password: "Password123!",
     });
     setPhotoUrl(
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&auto=format&fit=crop&q=80"
@@ -98,7 +102,7 @@ export default function RegisterScreen({
     setErrorMessage("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
@@ -122,16 +126,31 @@ export default function RegisterScreen({
       return;
     }
 
+    if (!formData.password || formData.password.length < 6) {
+      setErrorMessage("Please enter a password of at least 6 characters.");
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simulate API registration request
-    setTimeout(() => {
+    try {
+      const result = await registerUser({ ...formData, photoUrl });
+
+      if (result.error) {
+        setErrorMessage(result.error);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
       setIsSuccess(true);
       if (onSuccess) {
-        onSuccess({ ...formData, photoUrl });
+        onSuccess(result.user);
       }
-    }, 1000);
+    } catch (err) {
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -484,7 +503,29 @@ export default function RegisterScreen({
                 </div>
               </div>
 
-              {/* Row 4: Additional Information (Full Width Textarea) */}
+              {/* Row 4: Password */}
+              <div className="grid grid-cols-1 gap-4 w-full">
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label
+                    htmlFor="password"
+                    className="text-[12px] font-bold uppercase tracking-[1.5px] text-[#262626]"
+                  >
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Create a secure password"
+                    className="w-full h-12 px-4 bg-white border border-[#e6e6e6] text-[#262626] text-[14px] font-light placeholder:text-[#9a9a9a] rounded-none transition-colors focus:outline-none focus:border-[#262626] focus:ring-0"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Additional Information (Full Width Textarea) */}
               <div className="flex flex-col gap-1.5 text-left w-full">
                 <label
                   htmlFor="additionalInfo"
