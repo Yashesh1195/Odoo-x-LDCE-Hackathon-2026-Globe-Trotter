@@ -136,7 +136,7 @@ Categorized checklist:
 - Use **bold** for important names and numbers
 - Use tables where specified
 - Be specific — real place names, real prices, real addresses
-- Prices in USD
+- Prices in INR (₹)
 - Keep the tone professional, clean, and editorial — like a high-end travel magazine
 - Do NOT add any disclaimer about prices being estimates at the start or end`;
 }

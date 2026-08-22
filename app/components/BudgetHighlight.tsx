@@ -58,15 +58,15 @@ export default function BudgetHighlight({ budget }: BudgetHighlightProps) {
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
               {
-                value: `$${budget.totalBudget.toLocaleString()}`,
+                value: `₹${budget.totalBudget.toLocaleString()}`,
                 label: "TOTAL BUDGET",
               },
               {
-                value: `$${budget.totalSpent.toLocaleString()}`,
+                value: `₹${budget.totalSpent.toLocaleString()}`,
                 label: "SPENT",
               },
               {
-                value: `$${budget.remaining.toLocaleString()}`,
+                value: `₹${budget.remaining.toLocaleString()}`,
                 label: "REMAINING",
               },
             ].map((cell) => (

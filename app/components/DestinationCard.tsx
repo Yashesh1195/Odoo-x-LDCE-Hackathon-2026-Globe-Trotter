@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import type { Destination } from "@/app/lib/types";
 import { getLocationImage } from "@/app/lib/destinationImages";
+import Link from "next/link";
 
 interface DestinationCardProps {
   destination: Destination;
@@ -100,8 +101,8 @@ export default function DestinationCard({
               letterSpacing: "0.5px",
             }}
           >
-            ${destination.budgetRange.min.toLocaleString()} –{" "}
-            ${destination.budgetRange.max.toLocaleString()}
+            ₹{destination.budgetRange.min.toLocaleString()} –{" "}
+            ₹{destination.budgetRange.max.toLocaleString()}
           </span>
         </div>
       </div>
@@ -169,8 +170,8 @@ export default function DestinationCard({
         </div>
 
         {/* Learn More Link */}
-        <a
-          href="#"
+        <Link
+          href={`/trip/new?place=${encodeURIComponent(destination.name)}`}
           className="inline-flex items-center gap-1 no-underline hover:gap-2 transition-all"
           style={{
             fontSize: 13,
@@ -181,7 +182,7 @@ export default function DestinationCard({
           }}
         >
           Learn More ›
-        </a>
+        </Link>
       </div>
     </article>
   );

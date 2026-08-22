@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import type { Trip } from "@/app/lib/types";
 import { getLocationImage } from "@/app/lib/destinationImages";
+import Link from "next/link";
 
 interface TripCardProps {
   trip: Trip;
@@ -193,14 +194,14 @@ export default function TripCard({ trip, index }: TripCardProps) {
                 color: "var(--ink)",
               }}
             >
-              ${trip.budget.spent.toLocaleString()}{" "}
+              ₹{trip.budget.spent.toLocaleString()}{" "}
               <span
                 style={{
                   fontWeight: 300,
                   color: "var(--muted)",
                 }}
               >
-                / ${trip.budget.total.toLocaleString()}
+                / ₹{trip.budget.total.toLocaleString()}
               </span>
             </span>
           </div>
@@ -229,8 +230,8 @@ export default function TripCard({ trip, index }: TripCardProps) {
         </div>
 
         {/* View Details Link */}
-        <a
-          href="#"
+        <Link
+          href={`/trip/${trip.id}/itinerary`}
           className="inline-flex items-center gap-1 no-underline hover:gap-2 transition-all"
           style={{
             fontSize: 13,
@@ -241,7 +242,7 @@ export default function TripCard({ trip, index }: TripCardProps) {
           }}
         >
           View Details ›
-        </a>
+        </Link>
       </div>
     </article>
   );
