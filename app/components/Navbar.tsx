@@ -9,6 +9,9 @@ export default function Navbar() {
           GT - Globe Trotter
         </Link>
         <div className="hidden md:flex gap-6">
+          <Link href="/activity/search" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors">
+            Search Activity
+          </Link>
           <Link href="/trip/new" className="text-[14px] font-normal tracking-[0.3px] hover:text-[var(--primary)] transition-colors">
             Plan a Trip
           </Link>

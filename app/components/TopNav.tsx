@@ -8,6 +8,7 @@ export default function TopNav() {
 
   const navLinks = [
     { label: "Dashboard", href: "/dashboard", active: true },
+    { label: "Search Activity", href: "/activity/search" },
     { label: "My Trips", href: "/trips" },
     { label: "Destinations", href: "/dashboard" },
     { label: "Budget", href: "/dashboard" },
