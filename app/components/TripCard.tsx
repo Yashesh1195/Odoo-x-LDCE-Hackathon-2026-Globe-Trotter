@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Trip } from "@/app/lib/types";
 import { getLocationImage } from "@/app/lib/destinationImages";
 
@@ -12,6 +14,7 @@ interface TripCardProps {
 
 export default function TripCard({ trip, index }: TripCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
   const tripPhoto = trip.image?.startsWith("http") ? trip.image : getLocationImage(trip.destination || trip.name);
 
   const statusConfig: Record<
@@ -52,6 +55,7 @@ export default function TripCard({ trip, index }: TripCardProps) {
       className="animate-slideUp card-hover"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => router.push(`/trip/${trip.id}`)}
       style={{
         backgroundColor: "var(--canvas)",
         border: `1px solid ${isHovered ? "var(--primary)" : "var(--hairline)"}`,
@@ -229,9 +233,10 @@ export default function TripCard({ trip, index }: TripCardProps) {
         </div>
 
         {/* View Details Link */}
-        <a
-          href="#"
+        <Link
+          href={`/trip/${trip.id}`}
           className="inline-flex items-center gap-1 no-underline hover:gap-2 transition-all"
+          onClick={(e) => e.stopPropagation()}
           style={{
             fontSize: 13,
             fontWeight: 700,
@@ -241,7 +246,7 @@ export default function TripCard({ trip, index }: TripCardProps) {
           }}
         >
           View Details ›
-        </a>
+        </Link>
       </div>
     </article>
   );

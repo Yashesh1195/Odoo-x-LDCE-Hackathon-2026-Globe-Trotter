@@ -14,7 +14,7 @@ export async function getCommunityPosts(query?: string, filterBy?: string, sortB
     });
 
     if (query) {
-       posts = posts.filter(p => 
+       posts = posts.filter((p: any) => 
          p.content.toLowerCase().includes(query.toLowerCase()) ||
          (p.activity && p.activity.toLowerCase().includes(query.toLowerCase())) ||
          (p.location && p.location.toLowerCase().includes(query.toLowerCase()))
@@ -23,9 +23,9 @@ export async function getCommunityPosts(query?: string, filterBy?: string, sortB
     
     // Simplistic filter logic for the hackathon
     if (filterBy === "activity" && query) {
-      posts = posts.filter(p => p.activity?.toLowerCase().includes(query.toLowerCase()));
+      posts = posts.filter((p: any) => p.activity?.toLowerCase().includes(query.toLowerCase()));
     } else if (filterBy === "location" && query) {
-      posts = posts.filter(p => p.location?.toLowerCase().includes(query.toLowerCase()));
+      posts = posts.filter((p: any) => p.location?.toLowerCase().includes(query.toLowerCase()));
     }
 
     return { success: true, posts };
